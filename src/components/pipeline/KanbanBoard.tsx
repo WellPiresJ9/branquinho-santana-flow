@@ -44,6 +44,15 @@ const mockData: Column[] = [
         createdAt: '2024-01-18',
         produtoJuridico: 'Ação de Cobrança',
         status: 'em-atendimento'
+      },
+      {
+        id: '7',
+        name: 'Roberto Silva',
+        phone: '(11) 91234-5678',
+        value: 4000,
+        createdAt: '2024-01-19',
+        produtoJuridico: 'Inventário',
+        status: 'em-atendimento'
       }
     ]
   },
@@ -59,6 +68,15 @@ const mockData: Column[] = [
         value: 8000,
         createdAt: '2024-01-10',
         produtoJuridico: 'Constituição de Empresa',
+        status: 'agendado'
+      },
+      {
+        id: '8',
+        name: 'Fernando Oliveira',
+        phone: '(11) 98765-4321',
+        value: 6000,
+        createdAt: '2024-01-12',
+        produtoJuridico: 'Usucapião',
         status: 'agendado'
       }
     ]
@@ -76,6 +94,15 @@ const mockData: Column[] = [
         createdAt: '2024-01-05',
         produtoJuridico: 'Aposentadoria por Tempo',
         status: 'remarketing'
+      },
+      {
+        id: '9',
+        name: 'Sandra Lima',
+        phone: '(11) 87654-3210',
+        value: 3800,
+        createdAt: '2024-01-08',
+        produtoJuridico: 'Revisão de Aposentadoria',
+        status: 'remarketing'
       }
     ]
   },
@@ -92,6 +119,15 @@ const mockData: Column[] = [
         createdAt: '2024-01-01',
         produtoJuridico: 'Defesa Criminal',
         status: 'vencido'
+      },
+      {
+        id: '10',
+        name: 'Mariana Santos',
+        phone: '(11) 76543-2109',
+        value: 5500,
+        createdAt: '2024-01-03',
+        produtoJuridico: 'Ação Trabalhista',
+        status: 'vencido'
       }
     ]
   },
@@ -107,6 +143,15 @@ const mockData: Column[] = [
         value: 2800,
         createdAt: '2023-12-28',
         produtoJuridico: 'Divórcio Consensual',
+        status: 'perdido'
+      },
+      {
+        id: '11',
+        name: 'Ricardo Souza',
+        phone: '(11) 65432-1098',
+        value: 3200,
+        createdAt: '2023-12-30',
+        produtoJuridico: 'Regularização Imobiliária',
         status: 'perdido'
       }
     ]
@@ -125,6 +170,23 @@ export function KanbanBoard() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getServiceColor = (service: string) => {
+    const serviceColors: { [key: string]: string } = {
+      'Rescisão Trabalhista': 'bg-blue-100 text-blue-800 border-blue-200',
+      'Ação de Cobrança': 'bg-green-100 text-green-800 border-green-200',
+      'Constituição de Empresa': 'bg-purple-100 text-purple-800 border-purple-200',
+      'Aposentadoria por Tempo': 'bg-orange-100 text-orange-800 border-orange-200',
+      'Defesa Criminal': 'bg-red-100 text-red-800 border-red-200',
+      'Divórcio Consensual': 'bg-pink-100 text-pink-800 border-pink-200',
+      'Inventário': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'Usucapião': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'Revisão de Aposentadoria': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+      'Ação Trabalhista': 'bg-teal-100 text-teal-800 border-teal-200',
+      'Regularização Imobiliária': 'bg-lime-100 text-lime-800 border-lime-200'
+    };
+    return serviceColors[service] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const getInitials = (name: string) => {
@@ -169,14 +231,18 @@ export function KanbanBoard() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Phone className="w-3 h-3" />
                         <span>{lead.phone}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Scale className="w-3 h-3" />
-                        <span>{lead.produtoJuridico}</span>
+                      <div className="flex items-center gap-2">
+                        <Scale className="w-3 h-3 text-muted-foreground" />
+                        <span 
+                          className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getServiceColor(lead.produtoJuridico)}`}
+                        >
+                          {lead.produtoJuridico}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
