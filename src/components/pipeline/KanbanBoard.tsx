@@ -174,19 +174,19 @@ export function KanbanBoard() {
 
   const getServiceColor = (service: string) => {
     const serviceColors: { [key: string]: string } = {
-      'Rescisão Trabalhista': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Ação de Cobrança': 'bg-green-100 text-green-800 border-green-200',
-      'Constituição de Empresa': 'bg-purple-100 text-purple-800 border-purple-200',
-      'Aposentadoria por Tempo': 'bg-orange-100 text-orange-800 border-orange-200',
-      'Defesa Criminal': 'bg-red-100 text-red-800 border-red-200',
-      'Divórcio Consensual': 'bg-pink-100 text-pink-800 border-pink-200',
-      'Inventário': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-      'Usucapião': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'Revisão de Aposentadoria': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-      'Ação Trabalhista': 'bg-teal-100 text-teal-800 border-teal-200',
-      'Regularização Imobiliária': 'bg-lime-100 text-lime-800 border-lime-200'
+      'Rescisão Trabalhista': 'bg-primary/10 text-primary border-primary/20',
+      'Ação de Cobrança': 'bg-success/10 text-success border-success/20',
+      'Constituição de Empresa': 'bg-accent text-accent-foreground border-accent',
+      'Aposentadoria por Tempo': 'bg-warning/10 text-warning border-warning/20',
+      'Defesa Criminal': 'bg-destructive/10 text-destructive border-destructive/20',
+      'Divórcio Consensual': 'bg-primary/20 text-primary border-primary/30',
+      'Inventário': 'bg-muted text-muted-foreground border-border',
+      'Usucapião': 'bg-secondary text-secondary-foreground border-secondary',
+      'Revisão de Aposentadoria': 'bg-warning/20 text-warning border-warning/30',
+      'Ação Trabalhista': 'bg-success/20 text-success border-success/30',
+      'Regularização Imobiliária': 'bg-accent/50 text-accent-foreground border-accent'
     };
-    return serviceColors[service] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return serviceColors[service] || 'bg-muted text-muted-foreground border-border';
   };
 
   const getInitials = (name: string) => {
