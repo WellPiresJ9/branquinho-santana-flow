@@ -59,7 +59,7 @@ const mockData: Column[] = [
   {
     id: 'agendado',
     title: 'Agendados',
-    color: 'hsl(142, 76%, 36%)',
+    color: 'hsl(217, 91%, 60%)',
     leads: [
       {
         id: '3',
@@ -108,8 +108,8 @@ const mockData: Column[] = [
   },
   {
     id: 'vencido',
-    title: 'Vencidos',
-    color: 'hsl(355, 85%, 65%)',
+    title: 'VENCEMOS! 🏆',
+    color: 'hsl(142, 76%, 36%)',
     leads: [
       {
         id: '5',
