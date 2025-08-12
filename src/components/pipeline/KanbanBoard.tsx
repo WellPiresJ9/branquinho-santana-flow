@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Phone, Mail } from "lucide-react";
+import { Calendar, Phone, Scale } from "lucide-react";
 
 interface Lead {
   id: string;
   name: string;
-  email: string;
   phone: string;
   value: number;
   createdAt: string;
-  lastContact: string;
+  produtoJuridico: string;
   status: 'em-atendimento' | 'agendado' | 'remarketing' | 'vencido' | 'perdido';
 }
 
@@ -31,21 +30,19 @@ const mockData: Column[] = [
       {
         id: '1',
         name: 'Maria Silva',
-        email: 'maria@email.com',
         phone: '(11) 99999-9999',
         value: 5000,
         createdAt: '2024-01-15',
-        lastContact: '2024-01-20',
+        produtoJuridico: 'Direito Trabalhista',
         status: 'em-atendimento'
       },
       {
         id: '2',
         name: 'João Santos',
-        email: 'joao@email.com',
         phone: '(11) 88888-8888',
         value: 3500,
         createdAt: '2024-01-18',
-        lastContact: '2024-01-19',
+        produtoJuridico: 'Direito Civil',
         status: 'em-atendimento'
       }
     ]
@@ -58,11 +55,10 @@ const mockData: Column[] = [
       {
         id: '3',
         name: 'Ana Costa',
-        email: 'ana@email.com',
         phone: '(11) 77777-7777',
         value: 8000,
         createdAt: '2024-01-10',
-        lastContact: '2024-01-21',
+        produtoJuridico: 'Direito Empresarial',
         status: 'agendado'
       }
     ]
@@ -75,11 +71,10 @@ const mockData: Column[] = [
       {
         id: '4',
         name: 'Pedro Oliveira',
-        email: 'pedro@email.com',
         phone: '(11) 66666-6666',
         value: 4200,
         createdAt: '2024-01-05',
-        lastContact: '2024-01-15',
+        produtoJuridico: 'Direito Previdenciário',
         status: 'remarketing'
       }
     ]
@@ -92,11 +87,10 @@ const mockData: Column[] = [
       {
         id: '5',
         name: 'Carlos Lima',
-        email: 'carlos@email.com',
         phone: '(11) 55555-5555',
         value: 6500,
         createdAt: '2024-01-01',
-        lastContact: '2024-01-22',
+        produtoJuridico: 'Direito Criminal',
         status: 'vencido'
       }
     ]
@@ -109,11 +103,10 @@ const mockData: Column[] = [
       {
         id: '6',
         name: 'Lucia Mendes',
-        email: 'lucia@email.com',
         phone: '(11) 44444-4444',
         value: 2800,
         createdAt: '2023-12-28',
-        lastContact: '2024-01-10',
+        produtoJuridico: 'Direito de Família',
         status: 'perdido'
       }
     ]
@@ -181,16 +174,12 @@ export function KanbanBoard() {
                   <CardContent className="pt-0">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Mail className="w-3 h-3" />
-                        <span className="truncate">{lead.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Phone className="w-3 h-3" />
                         <span>{lead.phone}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
-                        <span>Último contato: {formatDate(lead.lastContact)}</span>
+                        <Scale className="w-3 h-3" />
+                        <span>{lead.produtoJuridico}</span>
                       </div>
                     </div>
                   </CardContent>
