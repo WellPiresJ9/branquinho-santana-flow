@@ -33,7 +33,7 @@ const mockData: Column[] = [
         phone: '(11) 99999-9999',
         value: 5000,
         createdAt: '2024-01-15',
-        produtoJuridico: 'Direito Trabalhista',
+        produtoJuridico: 'Rescisão Trabalhista',
         status: 'em-atendimento'
       },
       {
@@ -42,7 +42,7 @@ const mockData: Column[] = [
         phone: '(11) 88888-8888',
         value: 3500,
         createdAt: '2024-01-18',
-        produtoJuridico: 'Direito Civil',
+        produtoJuridico: 'Ação de Cobrança',
         status: 'em-atendimento'
       }
     ]
@@ -58,7 +58,7 @@ const mockData: Column[] = [
         phone: '(11) 77777-7777',
         value: 8000,
         createdAt: '2024-01-10',
-        produtoJuridico: 'Direito Empresarial',
+        produtoJuridico: 'Constituição de Empresa',
         status: 'agendado'
       }
     ]
@@ -74,7 +74,7 @@ const mockData: Column[] = [
         phone: '(11) 66666-6666',
         value: 4200,
         createdAt: '2024-01-05',
-        produtoJuridico: 'Direito Previdenciário',
+        produtoJuridico: 'Aposentadoria por Tempo',
         status: 'remarketing'
       }
     ]
@@ -90,7 +90,7 @@ const mockData: Column[] = [
         phone: '(11) 55555-5555',
         value: 6500,
         createdAt: '2024-01-01',
-        produtoJuridico: 'Direito Criminal',
+        produtoJuridico: 'Defesa Criminal',
         status: 'vencido'
       }
     ]
@@ -106,7 +106,7 @@ const mockData: Column[] = [
         phone: '(11) 44444-4444',
         value: 2800,
         createdAt: '2023-12-28',
-        produtoJuridico: 'Direito de Família',
+        produtoJuridico: 'Divórcio Consensual',
         status: 'perdido'
       }
     ]
@@ -164,9 +164,6 @@ export function KanbanBoard() {
                           <CardTitle className="text-sm font-medium">
                             {lead.name}
                           </CardTitle>
-                          <p className="text-xs text-muted-foreground">
-                            {formatCurrency(lead.value)}
-                          </p>
                         </div>
                       </div>
                     </div>
