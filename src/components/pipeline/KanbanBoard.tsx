@@ -140,62 +140,69 @@ export function KanbanBoard() {
 
   return (
     <div className="flex gap-6 overflow-x-auto pb-6">
-      {columns.map((column) => (
-        <div key={column.id} className="flex-shrink-0 w-80">
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: column.color }}
-              />
-              <h3 className="font-semibold text-foreground">{column.title}</h3>
-              <Badge variant="secondary" className="ml-auto">
-                {column.leads.length}
-              </Badge>
+      {columns.map((column, index) => (
+        <div key={column.id} className="relative">
+          <div className="flex-shrink-0 w-80">
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: column.color }}
+                />
+                <h3 className="font-semibold text-foreground">{column.title}</h3>
+                <Badge variant="secondary" className="ml-auto">
+                  {column.leads.length}
+                </Badge>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3 min-h-[600px]">
-            {column.leads.map((lead) => (
-              <Card key={lead.id} className="shadow-card hover:shadow-elegant transition-all duration-200 cursor-pointer">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {getInitials(lead.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-sm font-medium">
-                          {lead.name}
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrency(lead.value)}
-                        </p>
+            <div className="space-y-3 min-h-[600px]">
+              {column.leads.map((lead) => (
+                <Card key={lead.id} className="shadow-card hover:shadow-elegant transition-all duration-200 cursor-pointer">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {getInitials(lead.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-sm font-medium">
+                            {lead.name}
+                          </CardTitle>
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(lead.value)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Mail className="w-3 h-3" />
-                      <span className="truncate">{lead.email}</span>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Mail className="w-3 h-3" />
+                        <span className="truncate">{lead.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Phone className="w-3 h-3" />
+                        <span>{lead.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <span>Último contato: {formatDate(lead.lastContact)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Phone className="w-3 h-3" />
-                      <span>{lead.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>Último contato: {formatDate(lead.lastContact)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
+          
+          {/* Divisória vertical entre colunas */}
+          {index < columns.length - 1 && (
+            <div className="absolute top-0 right-[-12px] h-full w-px bg-border" />
+          )}
         </div>
       ))}
     </div>

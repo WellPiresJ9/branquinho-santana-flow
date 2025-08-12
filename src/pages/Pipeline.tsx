@@ -26,65 +26,6 @@ export default function Pipeline() {
         </div>
       </div>
 
-      {/* Resumo do pipeline */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Oportunidades
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">100</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Todas as etapas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Valor Total
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">R$ 540.000</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Potencial de receita
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Ticket Médio
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">R$ 5.400</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Por oportunidade
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tempo Médio
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">18 dias</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Para conversão
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Kanban Board */}
       <Card className="shadow-card">
         <CardHeader>
