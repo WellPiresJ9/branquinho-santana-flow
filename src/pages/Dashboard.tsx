@@ -191,9 +191,9 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">23</div>
+            <div className="text-2xl font-bold text-foreground">{remarketingCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Follow-ups agendados hoje
+              Disparos de remarketing agendados
             </p>
           </CardContent>
         </Card>
