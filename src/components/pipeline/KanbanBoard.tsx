@@ -28,11 +28,12 @@ interface Column {
 }
 
 const getLeadStatus = (lead: Lead): string => {
-  if (lead.em_atendimento) return 'em-atendimento';
+  // Prioridade: agendados > remarketing > vencemos > perdidos > em_atendimento (padrão)
   if (lead.agendados) return 'agendado';
   if (lead.remarketing) return 'remarketing';
   if (lead.vencemos) return 'vencido';
   if (lead.perdidos) return 'perdido';
+  // Se nenhum status específico estiver true, considera como em atendimento
   return 'em-atendimento';
 };
 
