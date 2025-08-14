@@ -1,17 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, Phone, Scale } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Lead {
-  id: string;
-  name: string;
-  phone: string;
-  value: number;
-  createdAt: string;
-  produtoJuridico: string;
-  status: 'em-atendimento' | 'agendado' | 'remarketing' | 'vencido' | 'perdido';
+  id: number;
+  nome: string | null;
+  telefone: string | null;
+  produto_juridico: string | null;
+  created_at: string;
+  em_atendimento: boolean;
+  agendados: boolean;
+  remarketing: boolean;
+  vencemos: boolean;
+  perdidos: boolean;
+  responsavel: string | null;
+  status: string | null;
 }
 
 interface Column {
@@ -21,152 +27,115 @@ interface Column {
   leads: Lead[];
 }
 
-const mockData: Column[] = [
-  {
-    id: 'em-atendimento',
-    title: 'Em Atendimento',
-    color: 'hsl(355, 85%, 45%)',
-    leads: [
-      {
-        id: '1',
-        name: 'Maria Silva',
-        phone: '(11) 99999-9999',
-        value: 5000,
-        createdAt: '2024-01-15',
-        produtoJuridico: 'Rescisão Trabalhista',
-        status: 'em-atendimento'
-      },
-      {
-        id: '2',
-        name: 'João Santos',
-        phone: '(11) 88888-8888',
-        value: 3500,
-        createdAt: '2024-01-18',
-        produtoJuridico: 'Ação de Cobrança',
-        status: 'em-atendimento'
-      },
-      {
-        id: '7',
-        name: 'Roberto Silva',
-        phone: '(11) 91234-5678',
-        value: 4000,
-        createdAt: '2024-01-19',
-        produtoJuridico: 'Inventário',
-        status: 'em-atendimento'
-      }
-    ]
-  },
-  {
-    id: 'agendado',
-    title: 'Agendados',
-    color: 'hsl(217, 91%, 60%)',
-    leads: [
-      {
-        id: '3',
-        name: 'Ana Costa',
-        phone: '(11) 77777-7777',
-        value: 8000,
-        createdAt: '2024-01-10',
-        produtoJuridico: 'Constituição de Empresa',
-        status: 'agendado'
-      },
-      {
-        id: '8',
-        name: 'Fernando Oliveira',
-        phone: '(11) 98765-4321',
-        value: 6000,
-        createdAt: '2024-01-12',
-        produtoJuridico: 'Usucapião',
-        status: 'agendado'
-      }
-    ]
-  },
-  {
-    id: 'remarketing',
-    title: 'Remarketing',
-    color: 'hsl(38, 92%, 50%)',
-    leads: [
-      {
-        id: '4',
-        name: 'Pedro Oliveira',
-        phone: '(11) 66666-6666',
-        value: 4200,
-        createdAt: '2024-01-05',
-        produtoJuridico: 'Aposentadoria por Tempo',
-        status: 'remarketing'
-      },
-      {
-        id: '9',
-        name: 'Sandra Lima',
-        phone: '(11) 87654-3210',
-        value: 3800,
-        createdAt: '2024-01-08',
-        produtoJuridico: 'Revisão de Aposentadoria',
-        status: 'remarketing'
-      }
-    ]
-  },
-  {
-    id: 'vencido',
-    title: 'VENCEMOS! 🏆',
-    color: 'hsl(142, 76%, 36%)',
-    leads: [
-      {
-        id: '5',
-        name: 'Carlos Lima',
-        phone: '(11) 55555-5555',
-        value: 6500,
-        createdAt: '2024-01-01',
-        produtoJuridico: 'Defesa Criminal',
-        status: 'vencido'
-      },
-      {
-        id: '10',
-        name: 'Mariana Santos',
-        phone: '(11) 76543-2109',
-        value: 5500,
-        createdAt: '2024-01-03',
-        produtoJuridico: 'Ação Trabalhista',
-        status: 'vencido'
-      }
-    ]
-  },
-  {
-    id: 'perdido',
-    title: 'Perdidos',
-    color: 'hsl(355, 15%, 60%)',
-    leads: [
-      {
-        id: '6',
-        name: 'Lucia Mendes',
-        phone: '(11) 44444-4444',
-        value: 2800,
-        createdAt: '2023-12-28',
-        produtoJuridico: 'Divórcio Consensual',
-        status: 'perdido'
-      },
-      {
-        id: '11',
-        name: 'Ricardo Souza',
-        phone: '(11) 65432-1098',
-        value: 3200,
-        createdAt: '2023-12-30',
-        produtoJuridico: 'Regularização Imobiliária',
-        status: 'perdido'
-      }
-    ]
-  }
-];
+const getLeadStatus = (lead: Lead): string => {
+  if (lead.em_atendimento) return 'em-atendimento';
+  if (lead.agendados) return 'agendado';
+  if (lead.remarketing) return 'remarketing';
+  if (lead.vencemos) return 'vencido';
+  if (lead.perdidos) return 'perdido';
+  return 'em-atendimento';
+};
+
+const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
+  const columns: Column[] = [
+    {
+      id: 'em-atendimento',
+      title: 'Em Atendimento',
+      color: 'hsl(355, 85%, 45%)',
+      leads: []
+    },
+    {
+      id: 'agendado',
+      title: 'Agendados',
+      color: 'hsl(217, 91%, 60%)',
+      leads: []
+    },
+    {
+      id: 'remarketing',
+      title: 'Remarketing',
+      color: 'hsl(38, 92%, 50%)',
+      leads: []
+    },
+    {
+      id: 'vencido',
+      title: 'VENCEMOS! 🏆',
+      color: 'hsl(142, 76%, 36%)',
+      leads: []
+    },
+    {
+      id: 'perdido',
+      title: 'Perdidos',
+      color: 'hsl(355, 15%, 60%)',
+      leads: []
+    }
+  ];
+
+  leads.forEach(lead => {
+    const status = getLeadStatus(lead);
+    const column = columns.find(col => col.id === status);
+    if (column) {
+      column.leads.push(lead);
+    }
+  });
+
+  return columns;
+};
 
 export function KanbanBoard() {
-  const [columns] = useState<Column[]>(mockData);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [columns, setColumns] = useState<Column[]>([]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  useEffect(() => {
+    // Buscar dados iniciais
+    const fetchChats = async () => {
+      const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar chats:', error);
+        return;
+      }
+
+      setLeads(data || []);
+    };
+
+    fetchChats();
+
+    // Configurar real-time updates
+    const channel = supabase
+      .channel('chats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chats'
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setLeads(prev => [payload.new as Lead, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setLeads(prev => prev.map(lead => 
+              lead.id === payload.new.id ? payload.new as Lead : lead
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            setLeads(prev => prev.filter(lead => lead.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    setColumns(organizeLeadsByStatus(leads));
+  }, [leads]);
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
@@ -189,7 +158,8 @@ export function KanbanBoard() {
     return serviceColors[service] || 'bg-muted text-muted-foreground border-border';
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null) => {
+    if (!name) return 'NN';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
@@ -219,12 +189,12 @@ export function KanbanBoard() {
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                            {getInitials(lead.name)}
+                            {getInitials(lead.nome)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <CardTitle className="text-sm font-medium">
-                            {lead.name}
+                            {lead.nome || 'Nome não informado'}
                           </CardTitle>
                         </div>
                       </div>
@@ -234,15 +204,21 @@ export function KanbanBoard() {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Phone className="w-3 h-3" />
-                        <span>{lead.phone}</span>
+                        <span>{lead.telefone || 'Telefone não informado'}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Scale className="w-3 h-3 text-muted-foreground" />
-                        <span 
-                          className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getServiceColor(lead.produtoJuridico)}`}
-                        >
-                          {lead.produtoJuridico}
-                        </span>
+                      {lead.produto_juridico && (
+                        <div className="flex items-center gap-2">
+                          <Scale className="w-3 h-3 text-muted-foreground" />
+                          <span 
+                            className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getServiceColor(lead.produto_juridico)}`}
+                          >
+                            {lead.produto_juridico}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <span>{formatDate(lead.created_at)}</span>
                       </div>
                     </div>
                   </CardContent>
