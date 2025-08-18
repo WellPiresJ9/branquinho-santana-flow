@@ -16,6 +16,7 @@ interface Lead {
   em_atendimento: boolean;
   agendados: boolean;
   remarketing: boolean;
+  reagendamento: boolean;
   vencemos: boolean;
   perdidos: boolean;
   responsavel: string | null;
@@ -30,8 +31,9 @@ interface Column {
 }
 
 const getLeadStatus = (lead: Lead): string => {
-  // Prioridade: agendados > remarketing > vencemos > perdidos > em_atendimento (padrão)
+  // Prioridade: agendados > reagendamento > remarketing > vencemos > perdidos > em_atendimento (padrão)
   if (lead.agendados) return 'agendado';
+  if (lead.reagendamento) return 'reagendamento';
   if (lead.remarketing) return 'remarketing';
   if (lead.vencemos) return 'vencido';
   if (lead.perdidos) return 'perdido';
@@ -51,6 +53,12 @@ const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
       id: 'agendado',
       title: 'Agendados',
       color: 'hsl(217, 91%, 60%)',
+      leads: []
+    },
+    {
+      id: 'reagendamento',
+      title: 'Reagendamento',
+      color: 'hsl(280, 85%, 65%)',
       leads: []
     },
     {
@@ -144,6 +152,7 @@ export function KanbanBoard() {
     const statusUpdate = {
       em_atendimento: false,
       agendados: false,
+      reagendamento: false,
       remarketing: false,
       vencemos: false,
       perdidos: false
@@ -156,6 +165,9 @@ export function KanbanBoard() {
         break;
       case 'agendado':
         statusUpdate.agendados = true;
+        break;
+      case 'reagendamento':
+        statusUpdate.reagendamento = true;
         break;
       case 'remarketing':
         statusUpdate.remarketing = true;
