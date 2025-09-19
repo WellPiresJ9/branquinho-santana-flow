@@ -1,9 +1,13 @@
 import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Filter, Search } from "lucide-react";
+import { useState } from "react";
 
 export default function Pipeline() {
+  const [searchTerm, setSearchTerm] = useState("");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -26,6 +30,17 @@ export default function Pipeline() {
         </div>
       </div>
 
+      {/* Barra de Pesquisa */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Input
+          placeholder="Pesquisar por nome ou telefone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {/* Kanban Board */}
       <Card className="shadow-card">
         <CardHeader>
@@ -35,7 +50,7 @@ export default function Pipeline() {
           </p>
         </CardHeader>
         <CardContent>
-          <KanbanBoard />
+          <KanbanBoard searchTerm={searchTerm} />
         </CardContent>
       </Card>
     </div>

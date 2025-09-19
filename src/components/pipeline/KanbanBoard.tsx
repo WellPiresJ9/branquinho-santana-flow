@@ -94,7 +94,11 @@ const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
   return columns;
 };
 
-export function KanbanBoard() {
+interface KanbanBoardProps {
+  searchTerm?: string;
+}
+
+export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
   
@@ -152,8 +156,19 @@ export function KanbanBoard() {
   }, []);
 
   useEffect(() => {
-    setColumns(organizeLeadsByStatus(leads));
-  }, [leads]);
+    // Filtrar leads baseado no termo de pesquisa
+    const filteredLeads = leads.filter(lead => {
+      if (!searchTerm) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      const nome = (lead.nome || '').toLowerCase();
+      const telefone = (lead.telefone || '').toLowerCase();
+      
+      return nome.includes(searchLower) || telefone.includes(searchLower);
+    });
+    
+    setColumns(organizeLeadsByStatus(filteredLeads));
+  }, [leads, searchTerm]);
 
   const updateLeadStatus = async (leadId: number, newStatus: string) => {
     // Resetar todos os status para false
