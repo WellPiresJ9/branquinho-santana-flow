@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Phone, Scale } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users2, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { LeadCard } from "./LeadCard";
+import { BulkSelectionToolbar } from "./BulkSelectionToolbar";
+import { BulkMoveModal } from "./BulkMoveModal";
 
 interface Lead {
   id: number;
@@ -95,6 +97,12 @@ const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
 export function KanbanBoard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
+  
+  // Estados para movimentação em massa
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
 
   useEffect(() => {
     // Buscar dados iniciais
@@ -237,128 +245,196 @@ export function KanbanBoard() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+  // Funções para movimentação em massa
+  const toggleBulkMode = () => {
+    setIsBulkMode(!isBulkMode);
+    setSelectedLeads(new Set());
   };
 
-  const getServiceColor = (service: string) => {
-    const serviceColors: { [key: string]: string } = {
-      'Rescisão Trabalhista': 'bg-primary/10 text-primary border-primary/20',
-      'Ação de Cobrança': 'bg-success/10 text-success border-success/20',
-      'Constituição de Empresa': 'bg-accent text-accent-foreground border-accent',
-      'Aposentadoria por Tempo': 'bg-warning/10 text-warning border-warning/20',
-      'Defesa Criminal': 'bg-destructive/10 text-destructive border-destructive/20',
-      'Divórcio Consensual': 'bg-primary/20 text-primary border-primary/30',
-      'Inventário': 'bg-muted text-muted-foreground border-border',
-      'Usucapião': 'bg-secondary text-secondary-foreground border-secondary',
-      'Revisão de Aposentadoria': 'bg-warning/20 text-warning border-warning/30',
-      'Ação Trabalhista': 'bg-success/20 text-success border-success/30',
-      'Regularização Imobiliária': 'bg-accent/50 text-accent-foreground border-accent'
-    };
-    return serviceColors[service] || 'bg-muted text-muted-foreground border-border';
+  const handleLeadSelection = (leadId: number, selected: boolean) => {
+    const newSelected = new Set(selectedLeads);
+    if (selected) {
+      newSelected.add(leadId);
+    } else {
+      newSelected.delete(leadId);
+    }
+    setSelectedLeads(newSelected);
   };
 
-  const getInitials = (name: string | null) => {
-    if (!name) return 'NN';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const selectAllLeads = () => {
+    const allLeadIds = new Set(leads.map(lead => lead.id));
+    setSelectedLeads(allLeadIds);
   };
+
+  const deselectAllLeads = () => {
+    setSelectedLeads(new Set());
+  };
+
+  const handleBulkMove = async (targetStatus: string) => {
+    if (selectedLeads.size === 0) return;
+
+    setIsMoving(true);
+    let successCount = 0;
+    const totalLeads = selectedLeads.size;
+
+    try {
+      for (const leadId of selectedLeads) {
+        const success = await updateLeadStatus(leadId, targetStatus);
+        if (success) {
+          successCount++;
+        }
+      }
+
+      if (successCount === totalLeads) {
+        toast.success(`${totalLeads} lead${totalLeads !== 1 ? 's' : ''} movido${totalLeads !== 1 ? 's' : ''} com sucesso!`);
+      } else {
+        toast.warning(`${successCount} de ${totalLeads} leads foram movidos. ${totalLeads - successCount} falharam.`);
+      }
+    } catch (error) {
+      toast.error('Erro ao mover leads');
+    } finally {
+      setIsMoving(false);
+      setShowBulkModal(false);
+      setSelectedLeads(new Set());
+      setIsBulkMode(false);
+    }
+  };
+
+  const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-6 overflow-x-auto pb-6">
-        {columns.map((column, index) => (
-          <div key={column.id} className="relative">
-            <div className="flex-shrink-0 w-80">
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: column.color }}
-                  />
-                  <h3 className="font-semibold text-foreground">{column.title}</h3>
-                  <Badge variant="secondary" className="ml-auto">
-                    {column.leads.length}
-                  </Badge>
-                </div>
-              </div>
-
-              <Droppable droppableId={column.id}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className={`space-y-3 min-h-[600px] p-2 rounded-lg transition-colors ${
-                      snapshot.isDraggingOver ? 'bg-muted/50' : ''
-                    }`}
-                  >
-                    {column.leads.map((lead, leadIndex) => (
-                      <Draggable key={lead.id} draggableId={lead.id.toString()} index={leadIndex}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`transition-transform ${
-                              snapshot.isDragging ? 'rotate-3 scale-105' : ''
-                            }`}
-                          >
-                            <Card className="shadow-card hover:shadow-elegant transition-all duration-200 cursor-grab active:cursor-grabbing">
-                              <CardHeader className="pb-3">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <Avatar className="w-8 h-8">
-                                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                        {getInitials(lead.nome)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                      <CardTitle className="text-sm font-medium">
-                                        {lead.nome || 'Nome não informado'}
-                                      </CardTitle>
-                                    </div>
-                                  </div>
-                                </div>
-                              </CardHeader>
-                              <CardContent className="pt-0">
-                                <div className="space-y-3">
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Phone className="w-3 h-3" />
-                                    <span>{lead.telefone || 'Telefone não informado'}</span>
-                                  </div>
-                                  {lead.produto_juridico && (
-                                    <div className="flex items-center gap-2">
-                                      <Scale className="w-3 h-3 text-muted-foreground" />
-                                      <span 
-                                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getServiceColor(lead.produto_juridico)}`}
-                                      >
-                                        {lead.produto_juridico}
-                                      </span>
-                                    </div>
-                                  )}
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Calendar className="w-3 h-3" />
-                                    <span>{formatDate(lead.created_at)}</span>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </div>
-            
-            {/* Divisória vertical entre colunas */}
-            {index < columns.length - 1 && (
-              <div className="absolute top-0 right-[-12px] h-full w-px bg-border" />
-            )}
-          </div>
-        ))}
+    <div className="space-y-6">
+      {/* Header com botão de movimentação em massa */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold">Funil de Conversão</h2>
+          <Badge variant="outline">
+            {leads.length} leads totais
+          </Badge>
+        </div>
+        
+        <Button
+          onClick={toggleBulkMode}
+          variant={isBulkMode ? "default" : "outline"}
+          className="gap-2"
+        >
+          {isBulkMode ? <CheckSquare className="w-4 h-4" /> : <Users2 className="w-4 h-4" />}
+          {isBulkMode ? 'Modo Seleção Ativo' : 'Movimentação em Massa'}
+        </Button>
       </div>
-    </DragDropContext>
+
+      {/* Toolbar de seleção em massa */}
+      {isBulkMode && (
+        <BulkSelectionToolbar
+          selectedCount={selectedLeads.size}
+          totalLeads={leads.length}
+          onSelectAll={selectAllLeads}
+          onDeselectAll={deselectAllLeads}
+          onMoveSelected={() => setShowBulkModal(true)}
+          onCancel={() => {
+            setIsBulkMode(false);
+            setSelectedLeads(new Set());
+          }}
+          allSelected={allLeadsSelected}
+        />
+      )}
+
+      {/* Kanban Board */}
+      <DragDropContext onDragEnd={isBulkMode ? () => {} : handleDragEnd}>
+        <div className="flex gap-6 overflow-x-auto pb-6">
+          {columns.map((column, index) => (
+            <div key={column.id} className="relative">
+              <div className="flex-shrink-0 w-80">
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: column.color }}
+                    />
+                    <h3 className="font-semibold text-foreground">{column.title}</h3>
+                    <Badge variant="secondary" className="ml-auto">
+                      {column.leads.length}
+                    </Badge>
+                  </div>
+                  
+                  {/* Botão "Selecionar Todos" para cada coluna no modo bulk */}
+                  {isBulkMode && column.leads.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const columnLeadIds = column.leads.map(lead => lead.id);
+                        const allColumnSelected = columnLeadIds.every(id => selectedLeads.has(id));
+                        
+                        const newSelected = new Set(selectedLeads);
+                        if (allColumnSelected) {
+                          columnLeadIds.forEach(id => newSelected.delete(id));
+                        } else {
+                          columnLeadIds.forEach(id => newSelected.add(id));
+                        }
+                        setSelectedLeads(newSelected);
+                      }}
+                      className="w-full text-xs mb-2"
+                    >
+                      {column.leads.every(lead => selectedLeads.has(lead.id)) ? 
+                        'Desmarcar Coluna' : 'Selecionar Coluna'
+                      }
+                    </Button>
+                  )}
+                </div>
+
+                <Droppable droppableId={column.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`space-y-3 min-h-[600px] p-2 rounded-lg transition-colors ${
+                        snapshot.isDraggingOver ? 'bg-muted/50' : ''
+                      }`}
+                    >
+                      {column.leads.map((lead, leadIndex) => (
+                        <Draggable 
+                          key={lead.id} 
+                          draggableId={lead.id.toString()} 
+                          index={leadIndex}
+                          isDragDisabled={isBulkMode}
+                        >
+                          {(provided, snapshot) => (
+                            <LeadCard
+                              lead={lead}
+                              provided={provided}
+                              snapshot={snapshot}
+                              isBulkMode={isBulkMode}
+                              isSelected={selectedLeads.has(lead.id)}
+                              onSelectionChange={handleLeadSelection}
+                            />
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+              
+              {/* Divisória vertical entre colunas */}
+              {index < columns.length - 1 && (
+                <div className="absolute top-0 right-[-12px] h-full w-px bg-border" />
+              )}
+            </div>
+          ))}
+        </div>
+      </DragDropContext>
+
+      {/* Modal de movimentação em massa */}
+      <BulkMoveModal
+        isOpen={showBulkModal}
+        onClose={() => setShowBulkModal(false)}
+        onConfirm={handleBulkMove}
+        selectedCount={selectedLeads.size}
+        columns={columns}
+        isLoading={isMoving}
+      />
+    </div>
   );
 }
