@@ -18,6 +18,7 @@ interface Lead {
   perdidos: boolean;
   responsavel: string | null;
   status: string | null;
+  hora_reuniao?: string | null;
 }
 
 interface LeadCardProps {
@@ -39,6 +40,15 @@ export function LeadCard({
 }: LeadCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getDisplayDate = () => {
+    // Para leads agendados, mostrar a data da reunião se existir
+    if (lead.agendados && lead.hora_reuniao) {
+      return formatDate(lead.hora_reuniao);
+    }
+    // Caso contrário, mostrar a data de criação
+    return formatDate(lead.created_at);
   };
 
   const getServiceColor = (service: string) => {
@@ -129,7 +139,7 @@ export function LeadCard({
             )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Calendar className="w-3 h-3" />
-              <span>{formatDate(lead.created_at)}</span>
+              <span>{getDisplayDate()}</span>
             </div>
           </div>
         </CardContent>
