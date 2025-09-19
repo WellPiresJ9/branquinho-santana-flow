@@ -45,7 +45,11 @@ export function LeadCard({
   const getDisplayDate = () => {
     // Para leads agendados, mostrar a data da reunião se existir
     if (lead.agendados && lead.hora_reuniao) {
-      return formatDate(lead.hora_reuniao);
+      const date = new Date(lead.hora_reuniao);
+      return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
     }
     // Caso contrário, mostrar a data de criação
     return formatDate(lead.created_at);
