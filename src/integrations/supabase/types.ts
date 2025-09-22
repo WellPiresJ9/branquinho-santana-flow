@@ -37,13 +37,18 @@ export type Database = {
           agendados: boolean | null
           created_at: string
           em_atendimento: boolean
+          hora_reuniao: string | null
           id: number
+          "mensagem-confirmacao-enviada": boolean | null
+          "mensagem-reagendamento-enviada": boolean | null
+          "mensagem-remarketing-enviada": boolean | null
           nome: string | null
           perdidos: boolean | null
           produto_juridico: string | null
           reagendamento: boolean
           remarketing: boolean | null
           responsavel: string | null
+          "reuniao-confirmada": boolean | null
           status: string | null
           telefone: string | null
           vencemos: boolean | null
@@ -52,13 +57,18 @@ export type Database = {
           agendados?: boolean | null
           created_at?: string
           em_atendimento?: boolean
+          hora_reuniao?: string | null
           id?: number
+          "mensagem-confirmacao-enviada"?: boolean | null
+          "mensagem-reagendamento-enviada"?: boolean | null
+          "mensagem-remarketing-enviada"?: boolean | null
           nome?: string | null
           perdidos?: boolean | null
           produto_juridico?: string | null
           reagendamento?: boolean
           remarketing?: boolean | null
           responsavel?: string | null
+          "reuniao-confirmada"?: boolean | null
           status?: string | null
           telefone?: string | null
           vencemos?: boolean | null
@@ -67,13 +77,18 @@ export type Database = {
           agendados?: boolean | null
           created_at?: string
           em_atendimento?: boolean
+          hora_reuniao?: string | null
           id?: number
+          "mensagem-confirmacao-enviada"?: boolean | null
+          "mensagem-reagendamento-enviada"?: boolean | null
+          "mensagem-remarketing-enviada"?: boolean | null
           nome?: string | null
           perdidos?: boolean | null
           produto_juridico?: string | null
           reagendamento?: boolean
           remarketing?: boolean | null
           responsavel?: string | null
+          "reuniao-confirmada"?: boolean | null
           status?: string | null
           telefone?: string | null
           vencemos?: boolean | null
