@@ -15,14 +15,19 @@ interface Lead {
   telefone: string | null;
   produto_juridico: string | null;
   created_at: string;
-  em_atendimento: boolean;
-  agendados: boolean;
-  remarketing: boolean;
-  reagendamento: boolean;
-  vencemos: boolean;
-  perdidos: boolean;
+  em_atendimento: boolean | null;
+  agendados: boolean | null;
+  remarketing: boolean | null;
+  reagendamento: boolean | null;
+  vencemos: boolean | null;
+  perdidos: boolean | null;
   responsavel: string | null;
   status: string | null;
+  hora_reuniao?: string | null;
+  "mensagem-confirmacao-enviada"?: boolean | null;
+  "mensagem-reagendamento-enviada"?: boolean | null;
+  "mensagem-remarketing-enviada"?: boolean | null;  
+  "reuniao-confirmada"?: boolean | null;
 }
 
 interface Column {
@@ -34,11 +39,12 @@ interface Column {
 
 const getLeadStatus = (lead: Lead): string => {
   // Prioridade: agendados > reagendamento > remarketing > vencemos > perdidos > em_atendimento (padrão)
-  if (lead.agendados) return 'agendado';
-  if (lead.reagendamento) return 'reagendamento';
-  if (lead.remarketing) return 'remarketing';
-  if (lead.vencemos) return 'vencido';
-  if (lead.perdidos) return 'perdido';
+  // MANTENDO A LÓGICA EXATA - apenas tratando valores null como false
+  if (lead.agendados ?? false) return 'agendado';
+  if (lead.reagendamento ?? false) return 'reagendamento'; 
+  if (lead.remarketing ?? false) return 'remarketing';
+  if (lead.vencemos ?? false) return 'vencido';
+  if (lead.perdidos ?? false) return 'perdido';
   // Se nenhum status específico estiver true, considera como em atendimento
   return 'em-atendimento';
 };
@@ -167,7 +173,16 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
       return nome.includes(searchLower) || telefone.includes(searchLower);
     });
     
-    setColumns(organizeLeadsByStatus(filteredLeads));
+    const newColumns = organizeLeadsByStatus(filteredLeads);
+    
+    // Log temporário para validar contagens (será removido após confirmação)
+    console.log('🔍 Validação de contagens após correção:');
+    newColumns.forEach(col => {
+      console.log(`${col.title}: ${col.leads.length} leads`);
+    });
+    console.log(`Total de leads filtrados: ${filteredLeads.length}`);
+    
+    setColumns(newColumns);
   }, [leads, searchTerm]);
 
   const updateLeadStatus = async (leadId: number, newStatus: string) => {
