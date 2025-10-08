@@ -117,9 +117,9 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
   useEffect(() => {
     // Buscar dados iniciais
     const fetchChats = async () => {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('chats')
-        .select('*')
+        .select('*', { count: 'exact' })
         .range(0, 4999)
         .order('created_at', { ascending: false });
 
@@ -128,6 +128,8 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
         return;
       }
 
+      console.log(`📊 Leads carregados do banco: ${data?.length || 0}`);
+      console.log(`📊 Total de leads na tabela: ${count || 0}`);
       setLeads(data || []);
     };
 
