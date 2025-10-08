@@ -115,6 +115,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
+  const [selectedDayByColumn, setSelectedDayByColumn] = useState<Record<string, number>>({});
 
   useEffect(() => {
     // Buscar TODOS os dados com paginação (Supabase tem limite de 1000 por query)
@@ -337,6 +338,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const toggleBulkMode = () => {
     setIsBulkMode(!isBulkMode);
     setSelectedLeads(new Set());
+    setSelectedDayByColumn({});
   };
 
   const handleLeadSelection = (leadId: number, selected: boolean) => {
@@ -391,6 +393,12 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const handleSelectByDay = (columnId: string, day: number) => {
     const column = columns.find(col => col.id === columnId);
     if (!column) return;
+
+    // Atualizar o dia selecionado para esta coluna
+    setSelectedDayByColumn(prev => ({
+      ...prev,
+      [columnId]: day
+    }));
 
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -506,7 +514,10 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                         }
                       </Button>
                       
-                      <DaySelector onSelectDay={(day) => handleSelectByDay(column.id, day)} />
+                      <DaySelector 
+                        onSelectDay={(day) => handleSelectByDay(column.id, day)}
+                        selectedDay={selectedDayByColumn[column.id]}
+                      />
                     </div>
                   )}
                 </div>

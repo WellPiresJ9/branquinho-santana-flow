@@ -5,9 +5,10 @@ import { useState } from "react";
 
 interface DaySelectorProps {
   onSelectDay: (day: number) => void;
+  selectedDay?: number;
 }
 
-export function DaySelector({ onSelectDay }: DaySelectorProps) {
+export function DaySelector({ onSelectDay, selectedDay }: DaySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const currentMonth = new Date().getMonth();
@@ -16,7 +17,6 @@ export function DaySelector({ onSelectDay }: DaySelectorProps) {
 
   const handleDayClick = (day: number) => {
     onSelectDay(day);
-    setIsOpen(false);
   };
 
   return (
@@ -24,7 +24,7 @@ export function DaySelector({ onSelectDay }: DaySelectorProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="w-full gap-2">
           <CalendarDays className="w-3 h-3" />
-          Selecionar por Dia
+          {selectedDay ? `Dia ${selectedDay} selecionado` : 'Selecionar por Dia'}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3" align="start">
@@ -34,7 +34,7 @@ export function DaySelector({ onSelectDay }: DaySelectorProps) {
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => (
               <Button
                 key={day}
-                variant="outline"
+                variant={selectedDay === day ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleDayClick(day)}
                 className="h-8 w-8 p-0 text-xs"
