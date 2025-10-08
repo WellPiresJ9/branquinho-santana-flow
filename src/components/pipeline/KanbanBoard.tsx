@@ -120,6 +120,7 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
       const { data, error } = await supabase
         .from('chats')
         .select('*')
+        .range(0, 4999)
         .order('created_at', { ascending: false });
 
       if (error) {
