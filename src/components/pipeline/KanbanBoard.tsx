@@ -115,25 +115,47 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
   const [isMoving, setIsMoving] = useState(false);
 
   useEffect(() => {
-    // Buscar dados iniciais
-    const fetchChats = async () => {
-      const { data, error, count } = await supabase
-        .from('chats')
-        .select('*', { count: 'exact' })
-        .range(0, 4999)
-        .order('created_at', { ascending: false });
+    // Buscar TODOS os dados com paginação (Supabase tem limite de 1000 por query)
+    const fetchAllChats = async () => {
+      const BATCH_SIZE = 1000;
+      let allLeads: Lead[] = [];
+      let hasMore = true;
+      let offset = 0;
 
-      if (error) {
-        console.error('Erro ao buscar chats:', error);
-        return;
+      try {
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('chats')
+            .select('*')
+            .range(offset, offset + BATCH_SIZE - 1)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Erro ao buscar chats:', error);
+            break;
+          }
+
+          if (data && data.length > 0) {
+            allLeads = [...allLeads, ...data];
+            offset += BATCH_SIZE;
+            
+            // Se retornou menos que BATCH_SIZE, não há mais dados
+            if (data.length < BATCH_SIZE) {
+              hasMore = false;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+
+        console.log(`✅ Total de leads carregados: ${allLeads.length}`);
+        setLeads(allLeads);
+      } catch (err) {
+        console.error('Erro ao buscar todos os chats:', err);
       }
-
-      console.log(`📊 Leads carregados do banco: ${data?.length || 0}`);
-      console.log(`📊 Total de leads na tabela: ${count || 0}`);
-      setLeads(data || []);
     };
 
-    fetchChats();
+    fetchAllChats();
 
     // Configurar real-time updates
     const channel = supabase
