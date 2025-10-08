@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { LeadCard } from "./LeadCard";
 import { BulkSelectionToolbar } from "./BulkSelectionToolbar";
 import { BulkMoveModal } from "./BulkMoveModal";
+import { DaySelector } from "./DaySelector";
 
 interface Lead {
   id: number;
@@ -102,9 +103,10 @@ const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
 
 interface KanbanBoardProps {
   searchTerm?: string;
+  selectedMonths?: string[];
 }
 
-export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
+export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoardProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
   
@@ -187,15 +189,46 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
   }, []);
 
   useEffect(() => {
-    // Filtrar leads baseado no termo de pesquisa
+    // Filtrar leads baseado no termo de pesquisa e meses selecionados
     const filteredLeads = leads.filter(lead => {
-      if (!searchTerm) return true;
-      
-      const searchLower = searchTerm.toLowerCase();
-      const nome = (lead.nome || '').toLowerCase();
-      const telefone = (lead.telefone || '').toLowerCase();
-      
-      return nome.includes(searchLower) || telefone.includes(searchLower);
+      // Filtro de pesquisa
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const nome = (lead.nome || '').toLowerCase();
+        const telefone = (lead.telefone || '').toLowerCase();
+        
+        if (!nome.includes(searchLower) && !telefone.includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Filtro de meses
+      if (selectedMonths.length > 0) {
+        const createdDate = new Date(lead.created_at);
+        const createdMonth = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Verificar se a data de criação está nos meses selecionados
+        let matchesCreatedDate = selectedMonths.includes(createdMonth);
+        
+        // Se tem hora de reunião, verificar também essa data
+        let matchesAppointmentDate = false;
+        if (lead.hora_reuniao) {
+          try {
+            const appointmentDate = new Date(lead.hora_reuniao);
+            const appointmentMonth = `${appointmentDate.getFullYear()}-${String(appointmentDate.getMonth() + 1).padStart(2, '0')}`;
+            matchesAppointmentDate = selectedMonths.includes(appointmentMonth);
+          } catch (e) {
+            // Se falhar ao parsear a data de agendamento, ignorar
+          }
+        }
+        
+        // Lead deve estar em pelo menos um dos meses selecionados (criação OU agendamento)
+        if (!matchesCreatedDate && !matchesAppointmentDate) {
+          return false;
+        }
+      }
+
+      return true;
     });
     
     const newColumns = organizeLeadsByStatus(filteredLeads);
@@ -208,7 +241,7 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
     console.log(`Total de leads filtrados: ${filteredLeads.length}`);
     
     setColumns(newColumns);
-  }, [leads, searchTerm]);
+  }, [leads, searchTerm, selectedMonths]);
 
   const updateLeadStatus = async (leadId: number, newStatus: string) => {
     // Resetar todos os status para false
@@ -355,6 +388,42 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
     }
   };
 
+  const handleSelectByDay = (columnId: string, day: number) => {
+    const column = columns.find(col => col.id === columnId);
+    if (!column) return;
+
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const leadsFromDay = column.leads.filter(lead => {
+      const createdDate = new Date(lead.created_at);
+      const isCreatedOnDay = createdDate.getDate() === day && 
+                            createdDate.getMonth() === currentMonth && 
+                            createdDate.getFullYear() === currentYear;
+      
+      // Verificar também a data de agendamento se existir
+      if (lead.hora_reuniao) {
+        try {
+          const appointmentDate = new Date(lead.hora_reuniao);
+          const isAppointmentOnDay = appointmentDate.getDate() === day && 
+                                     appointmentDate.getMonth() === currentMonth && 
+                                     appointmentDate.getFullYear() === currentYear;
+          return isCreatedOnDay || isAppointmentOnDay;
+        } catch (e) {
+          return isCreatedOnDay;
+        }
+      }
+      
+      return isCreatedOnDay;
+    });
+
+    const newSelected = new Set(selectedLeads);
+    leadsFromDay.forEach(lead => newSelected.add(lead.id));
+    setSelectedLeads(newSelected);
+    
+    toast.success(`${leadsFromDay.length} lead${leadsFromDay.length !== 1 ? 's' : ''} do dia ${day} selecionado${leadsFromDay.length !== 1 ? 's' : ''}!`);
+  };
+
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
 
   return (
@@ -412,29 +481,33 @@ export function KanbanBoard({ searchTerm = "" }: KanbanBoardProps) {
                     </Badge>
                   </div>
                   
-                  {/* Botão "Selecionar Todos" para cada coluna no modo bulk */}
+                  {/* Botões de seleção no modo bulk */}
                   {isBulkMode && column.leads.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const columnLeadIds = column.leads.map(lead => lead.id);
-                        const allColumnSelected = columnLeadIds.every(id => selectedLeads.has(id));
-                        
-                        const newSelected = new Set(selectedLeads);
-                        if (allColumnSelected) {
-                          columnLeadIds.forEach(id => newSelected.delete(id));
-                        } else {
-                          columnLeadIds.forEach(id => newSelected.add(id));
+                    <div className="space-y-2 mb-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const columnLeadIds = column.leads.map(lead => lead.id);
+                          const allColumnSelected = columnLeadIds.every(id => selectedLeads.has(id));
+                          
+                          const newSelected = new Set(selectedLeads);
+                          if (allColumnSelected) {
+                            columnLeadIds.forEach(id => newSelected.delete(id));
+                          } else {
+                            columnLeadIds.forEach(id => newSelected.add(id));
+                          }
+                          setSelectedLeads(newSelected);
+                        }}
+                        className="w-full text-xs"
+                      >
+                        {column.leads.every(lead => selectedLeads.has(lead.id)) ? 
+                          'Desmarcar Coluna' : 'Selecionar Coluna'
                         }
-                        setSelectedLeads(newSelected);
-                      }}
-                      className="w-full text-xs mb-2"
-                    >
-                      {column.leads.every(lead => selectedLeads.has(lead.id)) ? 
-                        'Desmarcar Coluna' : 'Selecionar Coluna'
-                      }
-                    </Button>
+                      </Button>
+                      
+                      <DaySelector onSelectDay={(day) => handleSelectByDay(column.id, day)} />
+                    </div>
                   )}
                 </div>
 
