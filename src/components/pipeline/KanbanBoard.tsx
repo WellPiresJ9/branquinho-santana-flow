@@ -394,15 +394,10 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     const column = columns.find(col => col.id === columnId);
     if (!column) return;
 
-    // Atualizar o dia selecionado para esta coluna
-    setSelectedDayByColumn(prev => ({
-      ...prev,
-      [columnId]: day
-    }));
-
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
+    // Encontrar os leads do dia selecionado
     const leadsFromDay = column.leads.filter(lead => {
       const createdDate = new Date(lead.created_at);
       const isCreatedOnDay = createdDate.getDate() === day && 
@@ -425,11 +420,51 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       return isCreatedOnDay;
     });
 
-    const newSelected = new Set(selectedLeads);
-    leadsFromDay.forEach(lead => newSelected.add(lead.id));
-    setSelectedLeads(newSelected);
-    
-    toast.success(`${leadsFromDay.length} lead${leadsFromDay.length !== 1 ? 's' : ''} do dia ${day} selecionado${leadsFromDay.length !== 1 ? 's' : ''}!`);
+    const leadIdsFromDay = new Set(leadsFromDay.map(l => l.id));
+
+    // Se o dia já está selecionado, desmarcar
+    if (selectedDayByColumn[columnId] === day) {
+      // Remover os leads deste dia da seleção
+      const newSelected = new Set(selectedLeads);
+      leadIdsFromDay.forEach(id => newSelected.delete(id));
+      setSelectedLeads(newSelected);
+      
+      // Limpar o dia selecionado desta coluna
+      setSelectedDayByColumn(prev => {
+        const updated = { ...prev };
+        delete updated[columnId];
+        return updated;
+      });
+      
+      toast.info(`Seleção do dia ${day} removida`);
+    } else {
+      // Remover leads do dia anterior desta coluna (se houver)
+      const newSelected = new Set<number>();
+      
+      // Manter seleções de outras colunas
+      selectedLeads.forEach(leadId => {
+        const lead = leads.find(l => l.id === leadId);
+        if (lead) {
+          const leadStatus = getLeadStatus(lead);
+          // Se o lead não é desta coluna, manter na seleção
+          if (leadStatus !== columnId) {
+            newSelected.add(leadId);
+          }
+        }
+      });
+      
+      // Adicionar os leads do novo dia
+      leadIdsFromDay.forEach(id => newSelected.add(id));
+      setSelectedLeads(newSelected);
+      
+      // Atualizar o dia selecionado para esta coluna
+      setSelectedDayByColumn(prev => ({
+        ...prev,
+        [columnId]: day
+      }));
+      
+      toast.success(`${leadsFromDay.length} lead${leadsFromDay.length !== 1 ? 's' : ''} do dia ${day} selecionado${leadsFromDay.length !== 1 ? 's' : ''}!`);
+    }
   };
 
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
