@@ -19,6 +19,8 @@ interface Lead {
   em_atendimento: boolean | null;
   agendados: boolean | null;
   remarketing: boolean | null;
+  remarketing_pedro: boolean | null;
+  remarketing_julianny: boolean | null;
   reagendamento: boolean | null;
   vencemos: boolean | null;
   perdidos: boolean | null;
@@ -39,11 +41,13 @@ interface Column {
 }
 
 const getLeadStatus = (lead: Lead): string => {
-  // Prioridade: agendados > reagendamento > remarketing > vencemos > perdidos > em_atendimento (padrão)
+  // Prioridade: agendados > reagendamento > remarketing > remarketing_pedro > remarketing_julianny > vencemos > perdidos > em_atendimento (padrão)
   // MANTENDO A LÓGICA EXATA - apenas tratando valores null como false
   if (lead.agendados ?? false) return 'agendado';
   if (lead.reagendamento ?? false) return 'reagendamento'; 
   if (lead.remarketing ?? false) return 'remarketing';
+  if (lead.remarketing_pedro ?? false) return 'remarketing-pedro';
+  if (lead.remarketing_julianny ?? false) return 'remarketing-julianny';
   if (lead.vencemos ?? false) return 'vencido';
   if (lead.perdidos ?? false) return 'perdido';
   // Se nenhum status específico estiver true, considera como em atendimento
@@ -74,6 +78,18 @@ const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
       id: 'remarketing',
       title: 'Remarketing',
       color: 'hsl(38, 92%, 50%)',
+      leads: []
+    },
+    {
+      id: 'remarketing-pedro',
+      title: 'Remarketing Pedro',
+      color: 'hsl(200, 85%, 55%)',
+      leads: []
+    },
+    {
+      id: 'remarketing-julianny',
+      title: 'Remarketing Julianny',
+      color: 'hsl(320, 85%, 60%)',
       leads: []
     },
     {
@@ -139,7 +155,12 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
           }
 
           if (data && data.length > 0) {
-            allLeads = [...allLeads, ...data];
+            const typedData = data.map((item: any) => ({
+              ...item,
+              remarketing_pedro: item.remarketing_pedro ?? null,
+              remarketing_julianny: item.remarketing_julianny ?? null
+            })) as Lead[];
+            allLeads = [...allLeads, ...typedData];
             offset += BATCH_SIZE;
             
             // Se retornou menos que BATCH_SIZE, não há mais dados
@@ -170,12 +191,22 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
           schema: 'public',
           table: 'chats'
         },
-        (payload) => {
+          (payload) => {
           if (payload.eventType === 'INSERT') {
-            setLeads(prev => [payload.new as Lead, ...prev]);
+            const newLead = {
+              ...(payload.new as any),
+              remarketing_pedro: (payload.new as any).remarketing_pedro ?? null,
+              remarketing_julianny: (payload.new as any).remarketing_julianny ?? null
+            } as Lead;
+            setLeads(prev => [newLead, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
+            const updatedLead = {
+              ...(payload.new as any),
+              remarketing_pedro: (payload.new as any).remarketing_pedro ?? null,
+              remarketing_julianny: (payload.new as any).remarketing_julianny ?? null
+            } as Lead;
             setLeads(prev => prev.map(lead => 
-              lead.id === payload.new.id ? payload.new as Lead : lead
+              lead.id === updatedLead.id ? updatedLead : lead
             ));
           } else if (payload.eventType === 'DELETE') {
             setLeads(prev => prev.filter(lead => lead.id !== payload.old.id));
@@ -251,6 +282,8 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       agendados: false,
       reagendamento: false,
       remarketing: false,
+      remarketing_pedro: false,
+      remarketing_julianny: false,
       vencemos: false,
       perdidos: false
     };
@@ -268,6 +301,12 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
         break;
       case 'remarketing':
         statusUpdate.remarketing = true;
+        break;
+      case 'remarketing-pedro':
+        statusUpdate.remarketing_pedro = true;
+        break;
+      case 'remarketing-julianny':
+        statusUpdate.remarketing_julianny = true;
         break;
       case 'vencido':
         statusUpdate.vencemos = true;
