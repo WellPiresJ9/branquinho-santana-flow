@@ -431,27 +431,24 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     }
   };
 
-  const handleSelectByDay = (columnId: string, day: number) => {
+  const handleSelectByDay = (columnId: string, day: number, month: number, year: number) => {
     const column = columns.find(col => col.id === columnId);
     if (!column) return;
-
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
 
     // Encontrar os leads do dia selecionado
     const leadsFromDay = column.leads.filter(lead => {
       const createdDate = new Date(lead.created_at);
       const isCreatedOnDay = createdDate.getDate() === day && 
-                            createdDate.getMonth() === currentMonth && 
-                            createdDate.getFullYear() === currentYear;
+                            createdDate.getMonth() === month && 
+                            createdDate.getFullYear() === year;
       
       // Verificar também a data de agendamento se existir
       if (lead.hora_reuniao) {
         try {
           const appointmentDate = new Date(lead.hora_reuniao);
           const isAppointmentOnDay = appointmentDate.getDate() === day && 
-                                     appointmentDate.getMonth() === currentMonth && 
-                                     appointmentDate.getFullYear() === currentYear;
+                                     appointmentDate.getMonth() === month && 
+                                     appointmentDate.getFullYear() === year;
           return isCreatedOnDay || isAppointmentOnDay;
         } catch (e) {
           return isCreatedOnDay;
@@ -614,7 +611,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                       </Button>
                       
                       <DaySelector 
-                        onSelectDay={(day) => handleSelectByDay(column.id, day)}
+                        onSelectDay={(day, month, year) => handleSelectByDay(column.id, day, month, year)}
                         selectedDay={selectedDayByColumn[column.id]}
                       />
                       

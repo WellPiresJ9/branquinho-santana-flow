@@ -4,7 +4,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 interface DaySelectorProps {
-  onSelectDay: (day: number) => void;
+  onSelectDay: (day: number, month: number, year: number) => void;
   selectedDay?: number;
 }
 
@@ -39,7 +39,8 @@ export function DaySelector({ onSelectDay, selectedDay }: DaySelectorProps) {
   };
 
   const handleDayClick = (day: number) => {
-    onSelectDay(day);
+    onSelectDay(day, selectedMonth, selectedYear);
+    setIsOpen(false);
   };
 
   return (
