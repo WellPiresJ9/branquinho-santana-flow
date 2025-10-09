@@ -36,7 +36,8 @@ export type Database = {
         Row: {
           agendados: boolean | null
           created_at: string
-          em_atendimento: boolean
+          em_atendimento: boolean | null
+          hora_criacao_reuniao: string | null
           hora_reuniao: string | null
           id: number
           "mensagem-confirmacao-enviada": boolean | null
@@ -45,8 +46,10 @@ export type Database = {
           nome: string | null
           perdidos: boolean | null
           produto_juridico: string | null
-          reagendamento: boolean
+          reagendamento: boolean | null
           remarketing: boolean | null
+          remarketing_julianny: boolean | null
+          remarketing_pedro: boolean | null
           responsavel: string | null
           "reuniao-confirmada": boolean | null
           status: string | null
@@ -56,7 +59,8 @@ export type Database = {
         Insert: {
           agendados?: boolean | null
           created_at?: string
-          em_atendimento?: boolean
+          em_atendimento?: boolean | null
+          hora_criacao_reuniao?: string | null
           hora_reuniao?: string | null
           id?: number
           "mensagem-confirmacao-enviada"?: boolean | null
@@ -65,8 +69,10 @@ export type Database = {
           nome?: string | null
           perdidos?: boolean | null
           produto_juridico?: string | null
-          reagendamento?: boolean
+          reagendamento?: boolean | null
           remarketing?: boolean | null
+          remarketing_julianny?: boolean | null
+          remarketing_pedro?: boolean | null
           responsavel?: string | null
           "reuniao-confirmada"?: boolean | null
           status?: string | null
@@ -76,7 +82,8 @@ export type Database = {
         Update: {
           agendados?: boolean | null
           created_at?: string
-          em_atendimento?: boolean
+          em_atendimento?: boolean | null
+          hora_criacao_reuniao?: string | null
           hora_reuniao?: string | null
           id?: number
           "mensagem-confirmacao-enviada"?: boolean | null
@@ -85,8 +92,10 @@ export type Database = {
           nome?: string | null
           perdidos?: boolean | null
           produto_juridico?: string | null
-          reagendamento?: boolean
+          reagendamento?: boolean | null
           remarketing?: boolean | null
+          remarketing_julianny?: boolean | null
+          remarketing_pedro?: boolean | null
           responsavel?: string | null
           "reuniao-confirmada"?: boolean | null
           status?: string | null
