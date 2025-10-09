@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Users2, CheckSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -132,6 +133,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [selectedDayByColumn, setSelectedDayByColumn] = useState<Record<string, number>>({});
+  const [remarketingQuantity, setRemarketingQuantity] = useState<string>("");
 
   useEffect(() => {
     // Buscar TODOS os dados com paginação (Supabase tem limite de 1000 por query)
@@ -506,6 +508,29 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     }
   };
 
+  const handleSelectByQuantity = (quantity: number) => {
+    const remarketingColumn = columns.find(col => col.id === 'remarketing');
+    if (!remarketingColumn || quantity <= 0) return;
+
+    const leadsToSelect = remarketingColumn.leads.slice(0, quantity);
+    const leadIds = new Set(leadsToSelect.map(l => l.id));
+
+    // Remover leads anteriores de remarketing da seleção
+    const newSelected = new Set<number>();
+    selectedLeads.forEach(leadId => {
+      const lead = leads.find(l => l.id === leadId);
+      if (lead && getLeadStatus(lead) !== 'remarketing') {
+        newSelected.add(leadId);
+      }
+    });
+
+    // Adicionar os novos leads selecionados
+    leadIds.forEach(id => newSelected.add(id));
+    setSelectedLeads(newSelected);
+
+    toast.success(`${leadsToSelect.length} lead${leadsToSelect.length !== 1 ? 's' : ''} selecionado${leadsToSelect.length !== 1 ? 's' : ''} em Remarketing`);
+  };
+
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
 
   return (
@@ -592,6 +617,35 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                         onSelectDay={(day) => handleSelectByDay(column.id, day)}
                         selectedDay={selectedDayByColumn[column.id]}
                       />
+                      
+                      {/* Input de quantidade apenas para remarketing */}
+                      {column.id === 'remarketing' && (
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            max={column.leads.length}
+                            placeholder="Qtd. de leads"
+                            value={remarketingQuantity}
+                            onChange={(e) => setRemarketingQuantity(e.target.value)}
+                            className="text-xs h-9"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const qty = parseInt(remarketingQuantity);
+                              if (!isNaN(qty) && qty > 0) {
+                                handleSelectByQuantity(qty);
+                              }
+                            }}
+                            disabled={!remarketingQuantity || parseInt(remarketingQuantity) <= 0}
+                            className="text-xs"
+                          >
+                            Selecionar
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
