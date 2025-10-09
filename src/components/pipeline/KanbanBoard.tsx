@@ -133,6 +133,8 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [selectedDayByColumn, setSelectedDayByColumn] = useState<Record<string, number>>({});
+  const [selectedMonthByColumn, setSelectedMonthByColumn] = useState<Record<string, number>>({});
+  const [selectedYearByColumn, setSelectedYearByColumn] = useState<Record<string, number>>({});
   const [remarketingQuantity, setRemarketingQuantity] = useState<string>("");
 
   useEffect(() => {
@@ -380,6 +382,8 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     setIsBulkMode(!isBulkMode);
     setSelectedLeads(new Set());
     setSelectedDayByColumn({});
+    setSelectedMonthByColumn({});
+    setSelectedYearByColumn({});
   };
 
   const handleLeadSelection = (leadId: number, selected: boolean) => {
@@ -461,7 +465,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     const leadIdsFromDay = new Set(leadsFromDay.map(l => l.id));
 
     // Se o dia já está selecionado, desmarcar
-    if (selectedDayByColumn[columnId] === day) {
+    if (selectedDayByColumn[columnId] === day && selectedMonthByColumn[columnId] === month && selectedYearByColumn[columnId] === year) {
       // Remover os leads deste dia da seleção
       const newSelected = new Set(selectedLeads);
       leadIdsFromDay.forEach(id => newSelected.delete(id));
@@ -469,6 +473,16 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       
       // Limpar o dia selecionado desta coluna
       setSelectedDayByColumn(prev => {
+        const updated = { ...prev };
+        delete updated[columnId];
+        return updated;
+      });
+      setSelectedMonthByColumn(prev => {
+        const updated = { ...prev };
+        delete updated[columnId];
+        return updated;
+      });
+      setSelectedYearByColumn(prev => {
         const updated = { ...prev };
         delete updated[columnId];
         return updated;
@@ -500,8 +514,25 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
         ...prev,
         [columnId]: day
       }));
+      setSelectedMonthByColumn(prev => ({
+        ...prev,
+        [columnId]: month
+      }));
+      setSelectedYearByColumn(prev => ({
+        ...prev,
+        [columnId]: year
+      }));
       
-      toast.success(`${leadsFromDay.length} lead${leadsFromDay.length !== 1 ? 's' : ''} do dia ${day} selecionado${leadsFromDay.length !== 1 ? 's' : ''}!`);
+      const monthNames = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      ];
+      
+      if (leadsFromDay.length === 0) {
+        toast.error(`Nenhum lead encontrado para ${day} de ${monthNames[month]} ${year}`);
+      } else {
+        toast.success(`${leadsFromDay.length} lead${leadsFromDay.length !== 1 ? 's' : ''} do dia ${day} de ${monthNames[month]} ${year} selecionado${leadsFromDay.length !== 1 ? 's' : ''}!`);
+      }
     }
   };
 
@@ -613,6 +644,8 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                       <DaySelector 
                         onSelectDay={(day, month, year) => handleSelectByDay(column.id, day, month, year)}
                         selectedDay={selectedDayByColumn[column.id]}
+                        selectedMonth={selectedMonthByColumn[column.id]}
+                        selectedYear={selectedYearByColumn[column.id]}
                       />
                       
                       {/* Input de quantidade apenas para remarketing */}

@@ -6,12 +6,14 @@ import { useState } from "react";
 interface DaySelectorProps {
   onSelectDay: (day: number, month: number, year: number) => void;
   selectedDay?: number;
+  selectedMonth?: number;
+  selectedYear?: number;
 }
 
-export function DaySelector({ onSelectDay, selectedDay }: DaySelectorProps) {
+export function DaySelector({ onSelectDay, selectedDay, selectedMonth: propSelectedMonth, selectedYear: propSelectedYear }: DaySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(propSelectedMonth ?? new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(propSelectedYear ?? new Date().getFullYear());
 
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
 
@@ -48,7 +50,7 @@ export function DaySelector({ onSelectDay, selectedDay }: DaySelectorProps) {
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="w-full gap-2">
           <CalendarDays className="w-3 h-3" />
-          {selectedDay ? `Dia ${selectedDay} selecionado` : 'Selecionar por Dia'}
+          {selectedDay ? `Dia ${selectedDay} de ${monthNames[propSelectedMonth ?? selectedMonth]} ${propSelectedYear ?? selectedYear}` : 'Selecionar por Dia'}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="start">
