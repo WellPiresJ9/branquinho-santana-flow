@@ -3,12 +3,56 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MonthFilter } from "@/components/pipeline/MonthFilter";
-import { Plus, Filter, Search } from "lucide-react";
+import { Plus, Filter, Search, Download } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import * as XLSX from 'xlsx';
 
 export default function Pipeline() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadRemarketing = async () => {
+    setIsDownloading(true);
+    try {
+      const { data: leads, error } = await supabase
+        .from('chats')
+        .select('nome, telefone')
+        .eq('remarketing', true)
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+
+      if (!leads || leads.length === 0) {
+        toast.error("Nenhum contato encontrado no remarketing");
+        return;
+      }
+
+      // Criar planilha Excel
+      const worksheet = XLSX.utils.json_to_sheet(
+        leads.map(lead => ({
+          'Nome': lead.nome || 'Sem nome',
+          'Telefone': lead.telefone || 'Sem telefone'
+        }))
+      );
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Remarketing');
+
+      // Gerar e baixar o arquivo
+      const fileName = `remarketing_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+
+      toast.success(`${leads.length} contato${leads.length !== 1 ? 's' : ''} exportado${leads.length !== 1 ? 's' : ''} com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao baixar lista:', error);
+      toast.error("Erro ao baixar a lista de remarketing");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -21,6 +65,15 @@ export default function Pipeline() {
         </div>
         
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleDownloadRemarketing}
+            disabled={isDownloading}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {isDownloading ? 'Baixando...' : 'Baixar Remarketing'}
+          </Button>
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" />
             Filtros
