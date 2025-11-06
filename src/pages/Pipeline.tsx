@@ -34,7 +34,7 @@ export default function Pipeline() {
       const worksheet = XLSX.utils.json_to_sheet(
         leads.map(lead => ({
           'Nome': lead.nome || 'Sem nome',
-          'Telefone': lead.telefone || 'Sem telefone'
+          'Telefone': lead.telefone ? lead.telefone.replace('@s.whatsapp.net', '') : 'Sem telefone'
         }))
       );
 
