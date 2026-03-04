@@ -3,13 +3,15 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users2, CheckSquare, ChevronDown } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Users2, CheckSquare, ChevronDown, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LeadCard } from "./LeadCard";
 import { BulkSelectionToolbar } from "./BulkSelectionToolbar";
 import { BulkMoveModal } from "./BulkMoveModal";
 import { DaySelector } from "./DaySelector";
+import * as XLSX from 'xlsx';
 
 interface Lead {
   id: number;
@@ -410,6 +412,30 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
 
+  const handleDownloadColumn = useCallback((column: Column) => {
+    if (column.leads.length === 0) {
+      toast.error(`Nenhum contato na etapa "${column.title}"`);
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      column.leads.map(lead => ({
+        'Nome': lead.nome || 'Sem nome',
+        'Telefone': lead.telefone ? lead.telefone.replace('@s.whatsapp.net', '') : 'Sem telefone',
+        'Produto Jurídico': lead.produto_juridico || '',
+        'Data': new Date(lead.created_at).toLocaleDateString('pt-BR'),
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, column.title.substring(0, 31));
+
+    const fileName = `${column.title.toLowerCase().replace(/\s+/g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast.success(`${column.leads.length} contato${column.leads.length !== 1 ? 's' : ''} exportado${column.leads.length !== 1 ? 's' : ''} de "${column.title}"!`);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -454,7 +480,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
             return (
               <div key={column.id} className="relative">
-                <div className="flex-shrink-0 w-80">
+                <div className="flex-shrink-0 w-80 flex flex-col" style={{ maxHeight: 'calc(100vh - 280px)' }}>
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div 
@@ -465,6 +491,15 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                       <Badge variant="secondary" className="ml-auto">
                         {column.leads.length}
                       </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleDownloadColumn(column)}
+                        title={`Exportar ${column.title}`}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                     
                     {isBulkMode && column.leads.length > 0 && (
@@ -529,50 +564,52 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                     )}
                   </div>
 
-                  <Droppable droppableId={column.id}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`space-y-3 min-h-[200px] p-2 rounded-lg transition-colors ${
-                          snapshot.isDraggingOver ? 'bg-muted/50' : ''
-                        }`}
-                      >
-                        {visibleLeads.map((lead, leadIndex) => (
-                          <Draggable 
-                            key={lead.id} 
-                            draggableId={lead.id.toString()} 
-                            index={leadIndex}
-                            isDragDisabled={isBulkMode}
-                          >
-                            {(provided, snapshot) => (
-                              <LeadCard
-                                lead={lead}
-                                provided={provided}
-                                snapshot={snapshot}
-                                isBulkMode={isBulkMode}
-                                isSelected={selectedLeads.has(lead.id)}
-                                onSelectionChange={handleLeadSelection}
-                              />
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                        
-                        {remainingCount > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleLoadMore(column.id)}
-                            className="w-full text-xs text-muted-foreground gap-1"
-                          >
-                            <ChevronDown className="w-3 h-3" />
-                            Carregar mais ({remainingCount} restantes)
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </Droppable>
+                  <ScrollArea className="flex-1">
+                    <Droppable droppableId={column.id}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`space-y-3 min-h-full p-2 rounded-lg transition-colors ${
+                            snapshot.isDraggingOver ? 'bg-muted/50' : ''
+                          }`}
+                        >
+                          {visibleLeads.map((lead, leadIndex) => (
+                            <Draggable 
+                              key={lead.id} 
+                              draggableId={lead.id.toString()} 
+                              index={leadIndex}
+                              isDragDisabled={isBulkMode}
+                            >
+                              {(provided, snapshot) => (
+                                <LeadCard
+                                  lead={lead}
+                                  provided={provided}
+                                  snapshot={snapshot}
+                                  isBulkMode={isBulkMode}
+                                  isSelected={selectedLeads.has(lead.id)}
+                                  onSelectionChange={handleLeadSelection}
+                                />
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                          
+                          {remainingCount > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleLoadMore(column.id)}
+                              className="w-full text-xs text-muted-foreground gap-1"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                              Carregar mais ({remainingCount} restantes)
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </Droppable>
+                  </ScrollArea>
                 </div>
                 
                 {index < columns.length - 1 && (
