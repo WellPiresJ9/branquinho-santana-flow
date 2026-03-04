@@ -480,7 +480,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
             return (
               <div key={column.id} className="relative">
-                <div className="flex-shrink-0 w-80">
+                <div className="flex-shrink-0 w-80 flex flex-col" style={{ maxHeight: 'calc(100vh - 280px)' }}>
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div 
@@ -491,6 +491,15 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                       <Badge variant="secondary" className="ml-auto">
                         {column.leads.length}
                       </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleDownloadColumn(column)}
+                        title={`Exportar ${column.title}`}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                     
                     {isBulkMode && column.leads.length > 0 && (
