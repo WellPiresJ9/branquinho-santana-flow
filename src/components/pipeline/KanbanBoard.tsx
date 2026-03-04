@@ -412,6 +412,30 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
 
+  const handleDownloadColumn = useCallback((column: Column) => {
+    if (column.leads.length === 0) {
+      toast.error(`Nenhum contato na etapa "${column.title}"`);
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      column.leads.map(lead => ({
+        'Nome': lead.nome || 'Sem nome',
+        'Telefone': lead.telefone ? lead.telefone.replace('@s.whatsapp.net', '') : 'Sem telefone',
+        'Produto Jurídico': lead.produto_juridico || '',
+        'Data': new Date(lead.created_at).toLocaleDateString('pt-BR'),
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, column.title.substring(0, 31));
+
+    const fileName = `${column.title.toLowerCase().replace(/\s+/g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast.success(`${column.leads.length} contato${column.leads.length !== 1 ? 's' : ''} exportado${column.leads.length !== 1 ? 's' : ''} de "${column.title}"!`);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
