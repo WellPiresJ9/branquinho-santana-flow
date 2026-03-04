@@ -564,50 +564,52 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                     )}
                   </div>
 
-                  <Droppable droppableId={column.id}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`space-y-3 min-h-[200px] p-2 rounded-lg transition-colors ${
-                          snapshot.isDraggingOver ? 'bg-muted/50' : ''
-                        }`}
-                      >
-                        {visibleLeads.map((lead, leadIndex) => (
-                          <Draggable 
-                            key={lead.id} 
-                            draggableId={lead.id.toString()} 
-                            index={leadIndex}
-                            isDragDisabled={isBulkMode}
-                          >
-                            {(provided, snapshot) => (
-                              <LeadCard
-                                lead={lead}
-                                provided={provided}
-                                snapshot={snapshot}
-                                isBulkMode={isBulkMode}
-                                isSelected={selectedLeads.has(lead.id)}
-                                onSelectionChange={handleLeadSelection}
-                              />
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                        
-                        {remainingCount > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleLoadMore(column.id)}
-                            className="w-full text-xs text-muted-foreground gap-1"
-                          >
-                            <ChevronDown className="w-3 h-3" />
-                            Carregar mais ({remainingCount} restantes)
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </Droppable>
+                  <ScrollArea className="flex-1">
+                    <Droppable droppableId={column.id}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`space-y-3 min-h-full p-2 rounded-lg transition-colors ${
+                            snapshot.isDraggingOver ? 'bg-muted/50' : ''
+                          }`}
+                        >
+                          {visibleLeads.map((lead, leadIndex) => (
+                            <Draggable 
+                              key={lead.id} 
+                              draggableId={lead.id.toString()} 
+                              index={leadIndex}
+                              isDragDisabled={isBulkMode}
+                            >
+                              {(provided, snapshot) => (
+                                <LeadCard
+                                  lead={lead}
+                                  provided={provided}
+                                  snapshot={snapshot}
+                                  isBulkMode={isBulkMode}
+                                  isSelected={selectedLeads.has(lead.id)}
+                                  onSelectionChange={handleLeadSelection}
+                                />
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                          
+                          {remainingCount > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleLoadMore(column.id)}
+                              className="w-full text-xs text-muted-foreground gap-1"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                              Carregar mais ({remainingCount} restantes)
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </Droppable>
+                  </ScrollArea>
                 </div>
                 
                 {index < columns.length - 1 && (
