@@ -11,7 +11,6 @@ import { toast } from "sonner";
 export default function Pipeline() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownloadRemarketing = async () => {
     setIsDownloading(true);
