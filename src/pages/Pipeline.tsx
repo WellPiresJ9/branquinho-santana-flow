@@ -3,11 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MonthFilter } from "@/components/pipeline/MonthFilter";
-import { Plus, Filter, Search, Download } from "lucide-react";
+import { Plus, Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import * as XLSX from 'xlsx';
 
 export default function Pipeline() {
   const [searchTerm, setSearchTerm] = useState("");
