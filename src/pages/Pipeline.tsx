@@ -23,15 +23,6 @@ export default function Pipeline() {
         </div>
         
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleDownloadRemarketing}
-            disabled={isDownloading}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {isDownloading ? 'Baixando...' : 'Baixar Remarketing'}
-          </Button>
           <Button variant="outline" size="sm">
             <Filter className="w-4 h-4 mr-2" />
             Filtros
