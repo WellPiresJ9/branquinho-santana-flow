@@ -131,3 +131,9 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Always show scrollbar in ScrollArea */
+[data-radix-scroll-area-viewport] + div [data-orientation="vertical"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
