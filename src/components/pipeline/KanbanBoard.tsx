@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users2, CheckSquare } from "lucide-react";
+import { Users2, CheckSquare, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LeadCard } from "./LeadCard";
@@ -29,10 +28,6 @@ interface Lead {
   responsavel: string | null;
   status: string | null;
   hora_reuniao?: string | null;
-  "mensagem-confirmacao-enviada"?: boolean | null;
-  "mensagem-reagendamento-enviada"?: boolean | null;
-  "mensagem-remarketing-enviada"?: boolean | null;  
-  "reuniao-confirmada"?: boolean | null;
 }
 
 interface Column {
@@ -42,9 +37,11 @@ interface Column {
   leads: Lead[];
 }
 
+const LEADS_PER_PAGE = 20;
+
+const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao';
+
 const getLeadStatus = (lead: Lead): string => {
-  // Prioridade: agendados > reagendamento > remarketing > remarketing_pedro > remarketing_julianny > vencemos > perdidos > em_atendimento (padrão)
-  // MANTENDO A LÓGICA EXATA - apenas tratando valores null como false
   if (lead.agendados ?? false) return 'agendado';
   if (lead.reagendamento ?? false) return 'reagendamento'; 
   if (lead.remarketing ?? false) return 'remarketing';
@@ -52,61 +49,22 @@ const getLeadStatus = (lead: Lead): string => {
   if (lead.remarketing_julianny ?? false) return 'remarketing-julianny';
   if (lead.vencemos ?? false) return 'vencido';
   if (lead.perdidos ?? false) return 'perdido';
-  // Se nenhum status específico estiver true, considera como em atendimento
   return 'em-atendimento';
 };
 
+const COLUMN_DEFINITIONS: Omit<Column, 'leads'>[] = [
+  { id: 'em-atendimento', title: 'Em Atendimento', color: 'hsl(355, 85%, 45%)' },
+  { id: 'agendado', title: 'Agendados', color: 'hsl(217, 91%, 60%)' },
+  { id: 'reagendamento', title: 'Reagendamento', color: 'hsl(280, 85%, 65%)' },
+  { id: 'remarketing', title: 'Remarketing', color: 'hsl(38, 92%, 50%)' },
+  { id: 'remarketing-pedro', title: 'Remarketing Pedro', color: 'hsl(200, 85%, 55%)' },
+  { id: 'remarketing-julianny', title: 'Remarketing Julianny', color: 'hsl(320, 85%, 60%)' },
+  { id: 'vencido', title: 'VENCEMOS! 🏆', color: 'hsl(142, 76%, 36%)' },
+  { id: 'perdido', title: 'Perdidos', color: 'hsl(355, 15%, 60%)' },
+];
+
 const organizeLeadsByStatus = (leads: Lead[]): Column[] => {
-  const columns: Column[] = [
-    {
-      id: 'em-atendimento',
-      title: 'Em Atendimento',
-      color: 'hsl(355, 85%, 45%)',
-      leads: []
-    },
-    {
-      id: 'agendado',
-      title: 'Agendados',
-      color: 'hsl(217, 91%, 60%)',
-      leads: []
-    },
-    {
-      id: 'reagendamento',
-      title: 'Reagendamento',
-      color: 'hsl(280, 85%, 65%)',
-      leads: []
-    },
-    {
-      id: 'remarketing',
-      title: 'Remarketing',
-      color: 'hsl(38, 92%, 50%)',
-      leads: []
-    },
-    {
-      id: 'remarketing-pedro',
-      title: 'Remarketing Pedro',
-      color: 'hsl(200, 85%, 55%)',
-      leads: []
-    },
-    {
-      id: 'remarketing-julianny',
-      title: 'Remarketing Julianny',
-      color: 'hsl(320, 85%, 60%)',
-      leads: []
-    },
-    {
-      id: 'vencido',
-      title: 'VENCEMOS! 🏆',
-      color: 'hsl(142, 76%, 36%)',
-      leads: []
-    },
-    {
-      id: 'perdido',
-      title: 'Perdidos',
-      color: 'hsl(355, 15%, 60%)',
-      leads: []
-    }
-  ];
+  const columns: Column[] = COLUMN_DEFINITIONS.map(def => ({ ...def, leads: [] }));
 
   leads.forEach(lead => {
     const status = getLeadStatus(lead);
@@ -127,6 +85,7 @@ interface KanbanBoardProps {
 export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoardProps) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
   
   // Estados para movimentação em massa
   const [isBulkMode, setIsBulkMode] = useState(false);
@@ -139,7 +98,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [remarketingQuantity, setRemarketingQuantity] = useState<string>("");
 
   useEffect(() => {
-    // Buscar TODOS os dados com paginação (Supabase tem limite de 1000 por query)
     const fetchAllChats = async () => {
       const BATCH_SIZE = 1000;
       let allLeads: Lead[] = [];
@@ -150,7 +108,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
         while (hasMore) {
           const { data, error } = await supabase
             .from('chats')
-            .select('*')
+            .select(SELECTED_COLUMNS)
             .range(offset, offset + BATCH_SIZE - 1)
             .order('created_at', { ascending: false });
 
@@ -160,15 +118,8 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
           }
 
           if (data && data.length > 0) {
-            const typedData = data.map((item: any) => ({
-              ...item,
-              remarketing_pedro: item.remarketing_pedro ?? null,
-              remarketing_julianny: item.remarketing_julianny ?? null
-            })) as Lead[];
-            allLeads = [...allLeads, ...typedData];
+            allLeads = [...allLeads, ...(data as Lead[])];
             offset += BATCH_SIZE;
-            
-            // Se retornou menos que BATCH_SIZE, não há mais dados
             if (data.length < BATCH_SIZE) {
               hasMore = false;
             }
@@ -177,7 +128,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
           }
         }
 
-        console.log(`✅ Total de leads carregados: ${allLeads.length}`);
         setLeads(allLeads);
       } catch (err) {
         console.error('Erro ao buscar todos os chats:', err);
@@ -186,33 +136,17 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
     fetchAllChats();
 
-    // Configurar real-time updates
     const channel = supabase
       .channel('chats-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chats'
-        },
-          (payload) => {
+        { event: '*', schema: 'public', table: 'chats' },
+        (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newLead = {
-              ...(payload.new as any),
-              remarketing_pedro: (payload.new as any).remarketing_pedro ?? null,
-              remarketing_julianny: (payload.new as any).remarketing_julianny ?? null
-            } as Lead;
-            setLeads(prev => [newLead, ...prev]);
+            setLeads(prev => [payload.new as Lead, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            const updatedLead = {
-              ...(payload.new as any),
-              remarketing_pedro: (payload.new as any).remarketing_pedro ?? null,
-              remarketing_julianny: (payload.new as any).remarketing_julianny ?? null
-            } as Lead;
-            setLeads(prev => prev.map(lead => 
-              lead.id === updatedLead.id ? updatedLead : lead
-            ));
+            const updated = payload.new as Lead;
+            setLeads(prev => prev.map(lead => lead.id === updated.id ? updated : lead));
           } else if (payload.eventType === 'DELETE') {
             setLeads(prev => prev.filter(lead => lead.id !== payload.old.id));
           }
@@ -226,40 +160,28 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   }, []);
 
   useEffect(() => {
-    // Filtrar leads baseado no termo de pesquisa e meses selecionados
     const filteredLeads = leads.filter(lead => {
-      // Filtro de pesquisa
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         const nome = (lead.nome || '').toLowerCase();
         const telefone = (lead.telefone || '').toLowerCase();
-        
         if (!nome.includes(searchLower) && !telefone.includes(searchLower)) {
           return false;
         }
       }
 
-      // Filtro de meses
       if (selectedMonths.length > 0) {
         const createdDate = new Date(lead.created_at);
         const createdMonth = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`;
-        
-        // Verificar se a data de criação está nos meses selecionados
         let matchesCreatedDate = selectedMonths.includes(createdMonth);
-        
-        // Se tem hora de reunião, verificar também essa data
         let matchesAppointmentDate = false;
         if (lead.hora_reuniao) {
           try {
             const appointmentDate = new Date(lead.hora_reuniao);
             const appointmentMonth = `${appointmentDate.getFullYear()}-${String(appointmentDate.getMonth() + 1).padStart(2, '0')}`;
             matchesAppointmentDate = selectedMonths.includes(appointmentMonth);
-          } catch (e) {
-            // Se falhar ao parsear a data de agendamento, ignorar
-          }
+          } catch (e) {}
         }
-        
-        // Lead deve estar em pelo menos um dos meses selecionados (criação OU agendamento)
         if (!matchesCreatedDate && !matchesAppointmentDate) {
           return false;
         }
@@ -268,20 +190,21 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       return true;
     });
     
-    const newColumns = organizeLeadsByStatus(filteredLeads);
-    
-    // Log temporário para validar contagens (será removido após confirmação)
-    console.log('🔍 Validação de contagens após correção:');
-    newColumns.forEach(col => {
-      console.log(`${col.title}: ${col.leads.length} leads`);
-    });
-    console.log(`Total de leads filtrados: ${filteredLeads.length}`);
-    
-    setColumns(newColumns);
+    setColumns(organizeLeadsByStatus(filteredLeads));
   }, [leads, searchTerm, selectedMonths]);
 
+  const getVisibleCount = useCallback((columnId: string) => {
+    return visibleCounts[columnId] || LEADS_PER_PAGE;
+  }, [visibleCounts]);
+
+  const handleLoadMore = useCallback((columnId: string) => {
+    setVisibleCounts(prev => ({
+      ...prev,
+      [columnId]: (prev[columnId] || LEADS_PER_PAGE) + LEADS_PER_PAGE
+    }));
+  }, []);
+
   const updateLeadStatus = async (leadId: number, newStatus: string) => {
-    // Resetar todos os status para false
     const statusUpdate = {
       em_atendimento: false,
       agendados: false,
@@ -293,32 +216,15 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       perdidos: false
     };
 
-    // Definir o novo status como true
     switch (newStatus) {
-      case 'em-atendimento':
-        statusUpdate.em_atendimento = true;
-        break;
-      case 'agendado':
-        statusUpdate.agendados = true;
-        break;
-      case 'reagendamento':
-        statusUpdate.reagendamento = true;
-        break;
-      case 'remarketing':
-        statusUpdate.remarketing = true;
-        break;
-      case 'remarketing-pedro':
-        statusUpdate.remarketing_pedro = true;
-        break;
-      case 'remarketing-julianny':
-        statusUpdate.remarketing_julianny = true;
-        break;
-      case 'vencido':
-        statusUpdate.vencemos = true;
-        break;
-      case 'perdido':
-        statusUpdate.perdidos = true;
-        break;
+      case 'em-atendimento': statusUpdate.em_atendimento = true; break;
+      case 'agendado': statusUpdate.agendados = true; break;
+      case 'reagendamento': statusUpdate.reagendamento = true; break;
+      case 'remarketing': statusUpdate.remarketing = true; break;
+      case 'remarketing-pedro': statusUpdate.remarketing_pedro = true; break;
+      case 'remarketing-julianny': statusUpdate.remarketing_julianny = true; break;
+      case 'vencido': statusUpdate.vencemos = true; break;
+      case 'perdido': statusUpdate.perdidos = true; break;
     }
 
     const { error } = await supabase
@@ -338,47 +244,27 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId } = result;
-
-    // Se não há destino, cancelar
     if (!destination) return;
-
-    // Se o item foi solto na mesma posição, cancelar
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     const leadId = parseInt(draggableId);
     const newStatus = destination.droppableId;
-
-    // Atualizar localmente primeiro para UX responsiva
     const sourceColumn = columns.find(col => col.id === source.droppableId);
     const destColumn = columns.find(col => col.id === destination.droppableId);
 
     if (sourceColumn && destColumn) {
       const leadToMove = sourceColumn.leads[source.index];
-      
-      // Remover do local original
       sourceColumn.leads.splice(source.index, 1);
-      
-      // Adicionar no novo local
       destColumn.leads.splice(destination.index, 0, leadToMove);
-      
       setColumns([...columns]);
 
-      // Atualizar no banco de dados
       const success = await updateLeadStatus(leadId, newStatus);
-      
       if (!success) {
-        // Se falhou, reverter a mudança local
         setColumns(organizeLeadsByStatus(leads));
       }
     }
   };
 
-  // Funções para movimentação em massa
   const toggleBulkMode = () => {
     setIsBulkMode(!isBulkMode);
     setSelectedLeads(new Set());
@@ -387,15 +273,17 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     setSelectedYearByColumn({});
   };
 
-  const handleLeadSelection = (leadId: number, selected: boolean) => {
-    const newSelected = new Set(selectedLeads);
-    if (selected) {
-      newSelected.add(leadId);
-    } else {
-      newSelected.delete(leadId);
-    }
-    setSelectedLeads(newSelected);
-  };
+  const handleLeadSelection = useCallback((leadId: number, selected: boolean) => {
+    setSelectedLeads(prev => {
+      const newSelected = new Set(prev);
+      if (selected) {
+        newSelected.add(leadId);
+      } else {
+        newSelected.delete(leadId);
+      }
+      return newSelected;
+    });
+  }, []);
 
   const selectAllLeads = () => {
     const allLeadIds = new Set(leads.map(lead => lead.id));
@@ -408,7 +296,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
   const handleBulkMove = async (targetStatus: string) => {
     if (selectedLeads.size === 0) return;
-
     setIsMoving(true);
     let successCount = 0;
     const totalLeads = selectedLeads.size;
@@ -416,9 +303,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     try {
       for (const leadId of selectedLeads) {
         const success = await updateLeadStatus(leadId, targetStatus);
-        if (success) {
-          successCount++;
-        }
+        if (success) successCount++;
       }
 
       if (successCount === totalLeads) {
@@ -440,14 +325,12 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     const column = columns.find(col => col.id === columnId);
     if (!column) return;
 
-    // Encontrar os leads do dia selecionado
     const leadsFromDay = column.leads.filter(lead => {
       const createdDate = new Date(lead.created_at);
       const isCreatedOnDay = createdDate.getDate() === day && 
                             createdDate.getMonth() === month && 
                             createdDate.getFullYear() === year;
       
-      // Verificar também a data de agendamento se existir
       if (lead.hora_reuniao) {
         try {
           const appointmentDate = new Date(lead.hora_reuniao);
@@ -465,64 +348,31 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
     const leadIdsFromDay = new Set(leadsFromDay.map(l => l.id));
 
-    // Se o dia já está selecionado, desmarcar
     if (selectedDayByColumn[columnId] === day && selectedMonthByColumn[columnId] === month && selectedYearByColumn[columnId] === year) {
-      // Remover os leads deste dia da seleção
       const newSelected = new Set(selectedLeads);
       leadIdsFromDay.forEach(id => newSelected.delete(id));
       setSelectedLeads(newSelected);
       
-      // Limpar o dia selecionado desta coluna
-      setSelectedDayByColumn(prev => {
-        const updated = { ...prev };
-        delete updated[columnId];
-        return updated;
-      });
-      setSelectedMonthByColumn(prev => {
-        const updated = { ...prev };
-        delete updated[columnId];
-        return updated;
-      });
-      setSelectedYearByColumn(prev => {
-        const updated = { ...prev };
-        delete updated[columnId];
-        return updated;
-      });
+      setSelectedDayByColumn(prev => { const u = { ...prev }; delete u[columnId]; return u; });
+      setSelectedMonthByColumn(prev => { const u = { ...prev }; delete u[columnId]; return u; });
+      setSelectedYearByColumn(prev => { const u = { ...prev }; delete u[columnId]; return u; });
       
       toast.info(`Seleção do dia ${day} removida`);
     } else {
-      // Remover leads do dia anterior desta coluna (se houver)
       const newSelected = new Set<number>();
-      
-      // Manter seleções de outras colunas
       selectedLeads.forEach(leadId => {
         const lead = leads.find(l => l.id === leadId);
-        if (lead) {
-          const leadStatus = getLeadStatus(lead);
-          // Se o lead não é desta coluna, manter na seleção
-          if (leadStatus !== columnId) {
-            newSelected.add(leadId);
-          }
+        if (lead && getLeadStatus(lead) !== columnId) {
+          newSelected.add(leadId);
         }
       });
       
-      // Adicionar os leads do novo dia
       leadIdsFromDay.forEach(id => newSelected.add(id));
       setSelectedLeads(newSelected);
       
-      // Atualizar o dia selecionado para esta coluna
-      setSelectedDayByColumn(prev => ({
-        ...prev,
-        [columnId]: day
-      }));
-      setSelectedMonthByColumn(prev => ({
-        ...prev,
-        [columnId]: month
-      }));
-      setSelectedYearByColumn(prev => ({
-        ...prev,
-        [columnId]: year
-      }));
+      setSelectedDayByColumn(prev => ({ ...prev, [columnId]: day }));
+      setSelectedMonthByColumn(prev => ({ ...prev, [columnId]: month }));
+      setSelectedYearByColumn(prev => ({ ...prev, [columnId]: year }));
       
       const monthNames = [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -544,7 +394,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     const leadsToSelect = remarketingColumn.leads.slice(0, quantity);
     const leadIds = new Set(leadsToSelect.map(l => l.id));
 
-    // Remover leads anteriores de remarketing da seleção
     const newSelected = new Set<number>();
     selectedLeads.forEach(leadId => {
       const lead = leads.find(l => l.id === leadId);
@@ -553,7 +402,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       }
     });
 
-    // Adicionar os novos leads selecionados
     leadIds.forEach(id => newSelected.add(id));
     setSelectedLeads(newSelected);
 
@@ -564,7 +412,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
   return (
     <div className="space-y-6">
-      {/* Header com botão de movimentação em massa */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold">Funil de Conversão</h2>
@@ -583,7 +430,6 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
         </Button>
       </div>
 
-      {/* Toolbar de seleção em massa */}
       {isBulkMode && (
         <BulkSelectionToolbar
           selectedCount={selectedLeads.size}
@@ -599,91 +445,92 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
         />
       )}
 
-      {/* Kanban Board */}
       <DragDropContext onDragEnd={isBulkMode ? () => {} : handleDragEnd}>
         <div className="flex gap-6 overflow-x-auto pb-6">
-          {columns.map((column, index) => (
-            <div key={column.id} className="relative">
-              <div className="flex-shrink-0 w-80">
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: column.color }}
-                    />
-                    <h3 className="font-semibold text-foreground">{column.title}</h3>
-                    <Badge variant="secondary" className="ml-auto">
-                      {column.leads.length}
-                    </Badge>
-                  </div>
-                  
-                  {/* Botões de seleção no modo bulk */}
-                  {isBulkMode && column.leads.length > 0 && (
-                    <div className="space-y-2 mb-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const columnLeadIds = column.leads.map(lead => lead.id);
-                          const allColumnSelected = columnLeadIds.every(id => selectedLeads.has(id));
-                          
-                          const newSelected = new Set(selectedLeads);
-                          if (allColumnSelected) {
-                            columnLeadIds.forEach(id => newSelected.delete(id));
-                          } else {
-                            columnLeadIds.forEach(id => newSelected.add(id));
-                          }
-                          setSelectedLeads(newSelected);
-                        }}
-                        className="w-full text-xs"
-                      >
-                        {column.leads.every(lead => selectedLeads.has(lead.id)) ? 
-                          'Desmarcar Coluna' : 'Selecionar Coluna'
-                        }
-                      </Button>
-                      
-                      <DaySelector 
-                        onSelectDay={(day, month, year) => handleSelectByDay(column.id, day, month, year)}
-                        selectedDay={selectedDayByColumn[column.id]}
-                        selectedMonth={selectedMonthByColumn[column.id]}
-                        selectedYear={selectedYearByColumn[column.id]}
-                      />
-                      
-                      {/* Input de quantidade apenas para remarketing */}
-                      {column.id === 'remarketing' && (
-                        <div className="flex gap-2">
-                          <Input
-                            type="number"
-                            min="1"
-                            max={column.leads.length}
-                            placeholder="Qtd. de leads"
-                            value={remarketingQuantity}
-                            onChange={(e) => setRemarketingQuantity(e.target.value)}
-                            className="text-xs h-9"
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const qty = parseInt(remarketingQuantity);
-                              if (!isNaN(qty) && qty > 0) {
-                                handleSelectByQuantity(qty);
-                              }
-                            }}
-                            disabled={!remarketingQuantity || parseInt(remarketingQuantity) <= 0}
-                            className="text-xs"
-                          >
-                            Selecionar
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+          {columns.map((column, index) => {
+            const visibleCount = getVisibleCount(column.id);
+            const visibleLeads = column.leads.slice(0, visibleCount);
+            const remainingCount = column.leads.length - visibleCount;
 
-                <Droppable droppableId={column.id}>
-                  {(provided, snapshot) => (
-                    <ScrollArea className="max-h-[2400px]">
+            return (
+              <div key={column.id} className="relative">
+                <div className="flex-shrink-0 w-80">
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: column.color }}
+                      />
+                      <h3 className="font-semibold text-foreground">{column.title}</h3>
+                      <Badge variant="secondary" className="ml-auto">
+                        {column.leads.length}
+                      </Badge>
+                    </div>
+                    
+                    {isBulkMode && column.leads.length > 0 && (
+                      <div className="space-y-2 mb-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const columnLeadIds = column.leads.map(lead => lead.id);
+                            const allColumnSelected = columnLeadIds.every(id => selectedLeads.has(id));
+                            
+                            const newSelected = new Set(selectedLeads);
+                            if (allColumnSelected) {
+                              columnLeadIds.forEach(id => newSelected.delete(id));
+                            } else {
+                              columnLeadIds.forEach(id => newSelected.add(id));
+                            }
+                            setSelectedLeads(newSelected);
+                          }}
+                          className="w-full text-xs"
+                        >
+                          {column.leads.every(lead => selectedLeads.has(lead.id)) ? 
+                            'Desmarcar Coluna' : 'Selecionar Coluna'
+                          }
+                        </Button>
+                        
+                        <DaySelector 
+                          onSelectDay={(day, month, year) => handleSelectByDay(column.id, day, month, year)}
+                          selectedDay={selectedDayByColumn[column.id]}
+                          selectedMonth={selectedMonthByColumn[column.id]}
+                          selectedYear={selectedYearByColumn[column.id]}
+                        />
+                        
+                        {column.id === 'remarketing' && (
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              max={column.leads.length}
+                              placeholder="Qtd. de leads"
+                              value={remarketingQuantity}
+                              onChange={(e) => setRemarketingQuantity(e.target.value)}
+                              className="text-xs h-9"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const qty = parseInt(remarketingQuantity);
+                                if (!isNaN(qty) && qty > 0) {
+                                  handleSelectByQuantity(qty);
+                                }
+                              }}
+                              disabled={!remarketingQuantity || parseInt(remarketingQuantity) <= 0}
+                              className="text-xs"
+                            >
+                              Selecionar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <Droppable droppableId={column.id}>
+                    {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
@@ -691,7 +538,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                           snapshot.isDraggingOver ? 'bg-muted/50' : ''
                         }`}
                       >
-                        {column.leads.map((lead, leadIndex) => (
+                        {visibleLeads.map((lead, leadIndex) => (
                           <Draggable 
                             key={lead.id} 
                             draggableId={lead.id.toString()} 
@@ -711,22 +558,32 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                           </Draggable>
                         ))}
                         {provided.placeholder}
+                        
+                        {remainingCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleLoadMore(column.id)}
+                            className="w-full text-xs text-muted-foreground gap-1"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                            Carregar mais ({remainingCount} restantes)
+                          </Button>
+                        )}
                       </div>
-                    </ScrollArea>
-                  )}
-                </Droppable>
+                    )}
+                  </Droppable>
+                </div>
+                
+                {index < columns.length - 1 && (
+                  <div className="absolute top-0 right-[-12px] h-full w-px bg-border" />
+                )}
               </div>
-              
-              {/* Divisória vertical entre colunas */}
-              {index < columns.length - 1 && (
-                <div className="absolute top-0 right-[-12px] h-full w-px bg-border" />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </DragDropContext>
 
-      {/* Modal de movimentação em massa */}
       <BulkMoveModal
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}

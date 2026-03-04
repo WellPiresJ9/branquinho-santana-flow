@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, Phone, Scale } from "lucide-react";
@@ -30,7 +30,21 @@ interface LeadCardProps {
   onSelectionChange: (leadId: number, selected: boolean) => void;
 }
 
-export function LeadCard({ 
+const SERVICE_COLORS: { [key: string]: string } = {
+  'Rescisão Trabalhista': 'bg-primary/10 text-primary border-primary/20',
+  'Ação de Cobrança': 'bg-success/10 text-success border-success/20',
+  'Constituição de Empresa': 'bg-accent text-accent-foreground border-accent',
+  'Aposentadoria por Tempo': 'bg-warning/10 text-warning border-warning/20',
+  'Defesa Criminal': 'bg-destructive/10 text-destructive border-destructive/20',
+  'Divórcio Consensual': 'bg-primary/20 text-primary border-primary/30',
+  'Inventário': 'bg-muted text-muted-foreground border-border',
+  'Usucapião': 'bg-secondary text-secondary-foreground border-secondary',
+  'Revisão de Aposentadoria': 'bg-warning/20 text-warning border-warning/30',
+  'Ação Trabalhista': 'bg-success/20 text-success border-success/30',
+  'Regularização Imobiliária': 'bg-accent/50 text-accent-foreground border-accent'
+};
+
+function LeadCardInner({ 
   lead, 
   provided, 
   snapshot, 
@@ -38,12 +52,7 @@ export function LeadCard({
   isSelected, 
   onSelectionChange 
 }: LeadCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
   const getDisplayDate = () => {
-    // Para leads agendados, mostrar a data da reunião se existir
     if (lead.agendados && lead.hora_reuniao) {
       const date = new Date(lead.hora_reuniao);
       return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { 
@@ -51,25 +60,7 @@ export function LeadCard({
         minute: '2-digit' 
       });
     }
-    // Caso contrário, mostrar a data de criação
-    return formatDate(lead.created_at);
-  };
-
-  const getServiceColor = (service: string) => {
-    const serviceColors: { [key: string]: string } = {
-      'Rescisão Trabalhista': 'bg-primary/10 text-primary border-primary/20',
-      'Ação de Cobrança': 'bg-success/10 text-success border-success/20',
-      'Constituição de Empresa': 'bg-accent text-accent-foreground border-accent',
-      'Aposentadoria por Tempo': 'bg-warning/10 text-warning border-warning/20',
-      'Defesa Criminal': 'bg-destructive/10 text-destructive border-destructive/20',
-      'Divórcio Consensual': 'bg-primary/20 text-primary border-primary/30',
-      'Inventário': 'bg-muted text-muted-foreground border-border',
-      'Usucapião': 'bg-secondary text-secondary-foreground border-secondary',
-      'Revisão de Aposentadoria': 'bg-warning/20 text-warning border-warning/30',
-      'Ação Trabalhista': 'bg-success/20 text-success border-success/30',
-      'Regularização Imobiliária': 'bg-accent/50 text-accent-foreground border-accent'
-    };
-    return serviceColors[service] || 'bg-muted text-muted-foreground border-border';
+    return new Date(lead.created_at).toLocaleDateString('pt-BR');
   };
 
   const getInitials = (name: string | null) => {
@@ -81,6 +72,10 @@ export function LeadCard({
     e.stopPropagation();
     onSelectionChange(lead.id, !isSelected);
   };
+
+  const serviceColor = lead.produto_juridico 
+    ? SERVICE_COLORS[lead.produto_juridico] || 'bg-muted text-muted-foreground border-border'
+    : '';
 
   return (
     <div
@@ -96,7 +91,6 @@ export function LeadCard({
           ? `cursor-pointer ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/30'}` 
           : 'cursor-grab active:cursor-grabbing'
       }`}>
-        {/* Checkbox para modo de seleção em massa */}
         {isBulkMode && (
           <div 
             className="absolute top-3 left-3 z-10"
@@ -135,7 +129,7 @@ export function LeadCard({
               <div className="flex items-center gap-2">
                 <Scale className="w-3 h-3 text-muted-foreground" />
                 <span 
-                  className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getServiceColor(lead.produto_juridico)}`}
+                  className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${serviceColor}`}
                 >
                   {lead.produto_juridico}
                 </span>
@@ -151,3 +145,5 @@ export function LeadCard({
     </div>
   );
 }
+
+export const LeadCard = React.memo(LeadCardInner);
