@@ -3,13 +3,15 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users2, CheckSquare, ChevronDown } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Users2, CheckSquare, ChevronDown, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LeadCard } from "./LeadCard";
 import { BulkSelectionToolbar } from "./BulkSelectionToolbar";
 import { BulkMoveModal } from "./BulkMoveModal";
 import { DaySelector } from "./DaySelector";
+import * as XLSX from 'xlsx';
 
 interface Lead {
   id: number;
