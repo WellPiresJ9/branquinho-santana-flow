@@ -12,46 +12,6 @@ export default function Pipeline() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
-  const handleDownloadRemarketing = async () => {
-    setIsDownloading(true);
-    try {
-      const { data: leads, error } = await supabase
-        .from('chats')
-        .select('nome, telefone')
-        .eq('remarketing', true)
-        .order('nome', { ascending: true });
-
-      if (error) throw error;
-
-      if (!leads || leads.length === 0) {
-        toast.error("Nenhum contato encontrado no remarketing");
-        return;
-      }
-
-      // Criar planilha Excel
-      const worksheet = XLSX.utils.json_to_sheet(
-        leads.map(lead => ({
-          'Nome': lead.nome || 'Sem nome',
-          'Telefone': lead.telefone ? lead.telefone.replace('@s.whatsapp.net', '') : 'Sem telefone'
-        }))
-      );
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Remarketing');
-
-      // Gerar e baixar o arquivo
-      const fileName = `remarketing_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-
-      toast.success(`${leads.length} contato${leads.length !== 1 ? 's' : ''} exportado${leads.length !== 1 ? 's' : ''} com sucesso!`);
-    } catch (error) {
-      console.error('Erro ao baixar lista:', error);
-      toast.error("Erro ao baixar a lista de remarketing");
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
