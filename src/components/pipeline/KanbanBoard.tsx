@@ -683,34 +683,36 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
                 <Droppable droppableId={column.id}>
                   {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`space-y-3 min-h-[600px] p-2 rounded-lg transition-colors ${
-                        snapshot.isDraggingOver ? 'bg-muted/50' : ''
-                      }`}
-                    >
-                      {column.leads.map((lead, leadIndex) => (
-                        <Draggable 
-                          key={lead.id} 
-                          draggableId={lead.id.toString()} 
-                          index={leadIndex}
-                          isDragDisabled={isBulkMode}
-                        >
-                          {(provided, snapshot) => (
-                            <LeadCard
-                              lead={lead}
-                              provided={provided}
-                              snapshot={snapshot}
-                              isBulkMode={isBulkMode}
-                              isSelected={selectedLeads.has(lead.id)}
-                              onSelectionChange={handleLeadSelection}
-                            />
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
+                    <ScrollArea className="max-h-[2400px]">
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`space-y-3 min-h-[200px] p-2 rounded-lg transition-colors ${
+                          snapshot.isDraggingOver ? 'bg-muted/50' : ''
+                        }`}
+                      >
+                        {column.leads.map((lead, leadIndex) => (
+                          <Draggable 
+                            key={lead.id} 
+                            draggableId={lead.id.toString()} 
+                            index={leadIndex}
+                            isDragDisabled={isBulkMode}
+                          >
+                            {(provided, snapshot) => (
+                              <LeadCard
+                                lead={lead}
+                                provided={provided}
+                                snapshot={snapshot}
+                                isBulkMode={isBulkMode}
+                                isSelected={selectedLeads.has(lead.id)}
+                                onSelectionChange={handleLeadSelection}
+                              />
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    </ScrollArea>
                   )}
                 </Droppable>
               </div>
