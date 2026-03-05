@@ -532,33 +532,31 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                           selectedYear={selectedYearByColumn[column.id]}
                         />
                         
-                        {column.id === 'remarketing' && (
-                          <div className="flex gap-2">
+                        <div className="flex gap-2">
                             <Input
                               type="number"
                               min="1"
                               max={column.leads.length}
                               placeholder="Qtd. de leads"
-                              value={remarketingQuantity}
-                              onChange={(e) => setRemarketingQuantity(e.target.value)}
+                              value={quantityByColumn[column.id] || ""}
+                              onChange={(e) => setQuantityByColumn(prev => ({ ...prev, [column.id]: e.target.value }))}
                               className="text-xs h-9"
                             />
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const qty = parseInt(remarketingQuantity);
+                                const qty = parseInt(quantityByColumn[column.id] || "0");
                                 if (!isNaN(qty) && qty > 0) {
-                                  handleSelectByQuantity(qty);
+                                  handleSelectByQuantity(column.id, qty);
                                 }
                               }}
-                              disabled={!remarketingQuantity || parseInt(remarketingQuantity) <= 0}
+                              disabled={!quantityByColumn[column.id] || parseInt(quantityByColumn[column.id] || "0") <= 0}
                               className="text-xs"
                             >
                               Selecionar
                             </Button>
                           </div>
-                        )}
                       </div>
                     )}
                   </div>
