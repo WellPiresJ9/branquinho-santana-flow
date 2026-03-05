@@ -137,3 +137,35 @@ All colors MUST be HSL.
   opacity: 1 !important;
   visibility: visible !important;
 }
+
+/* Native scroll for Kanban columns (draggable thumb) */
+.kanban-column-scroll {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) hsl(var(--muted));
+}
+
+.kanban-column-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border: 2px solid hsl(var(--muted));
+  border-radius: 9999px;
+  cursor: grab;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb:active {
+  cursor: grabbing;
+}
