@@ -3,7 +3,6 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users2, CheckSquare, ChevronDown, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -480,7 +479,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
 
             return (
               <div key={column.id} className="relative">
-                <div className="flex-shrink-0 w-80 flex flex-col" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                <div className="flex-shrink-0 w-80 h-[calc(100vh-280px)] min-h-0 flex flex-col">
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <div 
@@ -564,13 +563,13 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                     )}
                   </div>
 
-                  <ScrollArea className="flex-1">
+                  <div className="flex-1 min-h-0">
                     <Droppable droppableId={column.id}>
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          className={`space-y-3 min-h-full p-2 rounded-lg transition-colors ${
+                          className={`kanban-column-scroll h-full space-y-3 min-h-full p-2 rounded-lg transition-colors ${
                             snapshot.isDraggingOver ? 'bg-muted/50' : ''
                           }`}
                         >
@@ -609,7 +608,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                         </div>
                       )}
                     </Droppable>
-                  </ScrollArea>
+                  </div>
                 </div>
                 
                 {index < columns.length - 1 && (
