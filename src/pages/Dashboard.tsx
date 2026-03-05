@@ -108,15 +108,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Próximas Ações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{counts.remarketing}</div>
-            <p className="text-xs text-muted-foreground mt-1">Disparos de remarketing agendados</p>
-          </CardContent>
-        </Card>
       </div>
 
       <Card className="shadow-card">
