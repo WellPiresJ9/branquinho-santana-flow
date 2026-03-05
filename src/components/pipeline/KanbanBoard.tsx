@@ -96,7 +96,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [selectedDayByColumn, setSelectedDayByColumn] = useState<Record<string, number>>({});
   const [selectedMonthByColumn, setSelectedMonthByColumn] = useState<Record<string, number>>({});
   const [selectedYearByColumn, setSelectedYearByColumn] = useState<Record<string, number>>({});
-  const [remarketingQuantity, setRemarketingQuantity] = useState<string>("");
+  const [quantityByColumn, setQuantityByColumn] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchAllChats = async () => {
