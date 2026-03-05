@@ -96,7 +96,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [selectedDayByColumn, setSelectedDayByColumn] = useState<Record<string, number>>({});
   const [selectedMonthByColumn, setSelectedMonthByColumn] = useState<Record<string, number>>({});
   const [selectedYearByColumn, setSelectedYearByColumn] = useState<Record<string, number>>({});
-  const [remarketingQuantity, setRemarketingQuantity] = useState<string>("");
+  const [quantityByColumn, setQuantityByColumn] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchAllChats = async () => {
@@ -388,17 +388,17 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     }
   };
 
-  const handleSelectByQuantity = (quantity: number) => {
-    const remarketingColumn = columns.find(col => col.id === 'remarketing');
-    if (!remarketingColumn || quantity <= 0) return;
+  const handleSelectByQuantity = (columnId: string, quantity: number) => {
+    const column = columns.find(col => col.id === columnId);
+    if (!column || quantity <= 0) return;
 
-    const leadsToSelect = remarketingColumn.leads.slice(0, quantity);
+    const leadsToSelect = column.leads.slice(0, quantity);
     const leadIds = new Set(leadsToSelect.map(l => l.id));
 
     const newSelected = new Set<number>();
     selectedLeads.forEach(leadId => {
       const lead = leads.find(l => l.id === leadId);
-      if (lead && getLeadStatus(lead) !== 'remarketing') {
+      if (lead && getLeadStatus(lead) !== columnId) {
         newSelected.add(leadId);
       }
     });
@@ -406,7 +406,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     leadIds.forEach(id => newSelected.add(id));
     setSelectedLeads(newSelected);
 
-    toast.success(`${leadsToSelect.length} lead${leadsToSelect.length !== 1 ? 's' : ''} selecionado${leadsToSelect.length !== 1 ? 's' : ''} em Remarketing`);
+    toast.success(`${leadsToSelect.length} lead${leadsToSelect.length !== 1 ? 's' : ''} selecionado${leadsToSelect.length !== 1 ? 's' : ''} em ${column.title}`);
   };
 
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
@@ -532,33 +532,31 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                           selectedYear={selectedYearByColumn[column.id]}
                         />
                         
-                        {column.id === 'remarketing' && (
-                          <div className="flex gap-2">
+                        <div className="flex gap-2">
                             <Input
                               type="number"
                               min="1"
                               max={column.leads.length}
                               placeholder="Qtd. de leads"
-                              value={remarketingQuantity}
-                              onChange={(e) => setRemarketingQuantity(e.target.value)}
+                              value={quantityByColumn[column.id] || ""}
+                              onChange={(e) => setQuantityByColumn(prev => ({ ...prev, [column.id]: e.target.value }))}
                               className="text-xs h-9"
                             />
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const qty = parseInt(remarketingQuantity);
+                                const qty = parseInt(quantityByColumn[column.id] || "0");
                                 if (!isNaN(qty) && qty > 0) {
-                                  handleSelectByQuantity(qty);
+                                  handleSelectByQuantity(column.id, qty);
                                 }
                               }}
-                              disabled={!remarketingQuantity || parseInt(remarketingQuantity) <= 0}
+                              disabled={!quantityByColumn[column.id] || parseInt(quantityByColumn[column.id] || "0") <= 0}
                               className="text-xs"
                             >
                               Selecionar
                             </Button>
                           </div>
-                        )}
                       </div>
                     )}
                   </div>
