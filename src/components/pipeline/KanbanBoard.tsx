@@ -388,17 +388,17 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     }
   };
 
-  const handleSelectByQuantity = (quantity: number) => {
-    const remarketingColumn = columns.find(col => col.id === 'remarketing');
-    if (!remarketingColumn || quantity <= 0) return;
+  const handleSelectByQuantity = (columnId: string, quantity: number) => {
+    const column = columns.find(col => col.id === columnId);
+    if (!column || quantity <= 0) return;
 
-    const leadsToSelect = remarketingColumn.leads.slice(0, quantity);
+    const leadsToSelect = column.leads.slice(0, quantity);
     const leadIds = new Set(leadsToSelect.map(l => l.id));
 
     const newSelected = new Set<number>();
     selectedLeads.forEach(leadId => {
       const lead = leads.find(l => l.id === leadId);
-      if (lead && getLeadStatus(lead) !== 'remarketing') {
+      if (lead && getLeadStatus(lead) !== columnId) {
         newSelected.add(leadId);
       }
     });
@@ -406,7 +406,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     leadIds.forEach(id => newSelected.add(id));
     setSelectedLeads(newSelected);
 
-    toast.success(`${leadsToSelect.length} lead${leadsToSelect.length !== 1 ? 's' : ''} selecionado${leadsToSelect.length !== 1 ? 's' : ''} em Remarketing`);
+    toast.success(`${leadsToSelect.length} lead${leadsToSelect.length !== 1 ? 's' : ''} selecionado${leadsToSelect.length !== 1 ? 's' : ''} em ${column.title}`);
   };
 
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
