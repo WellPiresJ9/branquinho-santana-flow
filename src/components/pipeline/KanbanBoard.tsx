@@ -3,7 +3,19 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users2, CheckSquare, ChevronDown, Download, Mail } from "lucide-react";
+import { Users2, CheckSquare, ChevronDown, Download, Mail, AlertTriangle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LeadCard } from "./LeadCard";
