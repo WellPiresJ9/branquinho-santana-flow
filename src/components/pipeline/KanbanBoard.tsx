@@ -661,11 +661,51 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       <BulkMoveModal
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}
-        onConfirm={handleBulkMove}
+        onConfirm={(targetStatus) => {
+          if (selectedLeads.size > 100) {
+            setPendingBulkTarget(targetStatus);
+            setShowBulkModal(false);
+            setShowHighVolumeConfirm(true);
+          } else {
+            handleBulkMove(targetStatus);
+          }
+        }}
         selectedCount={selectedLeads.size}
         columns={columns}
         isLoading={isMoving}
       />
+
+      <AlertDialog open={showHighVolumeConfirm} onOpenChange={setShowHighVolumeConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Volume alto de leads
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a mover <strong>{selectedLeads.size} leads</strong> de uma só vez. 
+              Essa ação pode levar algum tempo e não pode ser desfeita facilmente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowHighVolumeConfirm(false);
+              setShowBulkModal(true);
+            }}>
+              Voltar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowHighVolumeConfirm(false);
+                handleBulkMove(pendingBulkTarget);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Confirmar Movimentação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
