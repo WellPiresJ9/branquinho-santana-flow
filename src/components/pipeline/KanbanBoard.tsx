@@ -290,6 +290,9 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     setSelectedDayByColumn({});
     setSelectedMonthByColumn({});
     setSelectedYearByColumn({});
+    setFilterRmktByColumn({});
+    setFilterReagByColumn({});
+    setQuantityByColumn({});
   };
 
   const handleLeadSelection = useCallback((leadId: number, selected: boolean) => {
