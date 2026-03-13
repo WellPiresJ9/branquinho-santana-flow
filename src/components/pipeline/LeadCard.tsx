@@ -142,6 +142,22 @@ function LeadCardInner({
               <Calendar className="w-3 h-3" />
               <span>{getDisplayDate()}</span>
             </div>
+            {(lead["mensagem-remarketing-enviada"] || lead["mensagem-reagendamento-enviada"]) && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {lead["mensagem-remarketing-enviada"] && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 gap-1 border-warning/40 bg-warning/10 text-warning">
+                    <MailCheck className="w-2.5 h-2.5" />
+                    Rmkt enviado
+                  </Badge>
+                )}
+                {lead["mensagem-reagendamento-enviada"] && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 gap-1 border-primary/40 bg-primary/10 text-primary">
+                    <MailCheck className="w-2.5 h-2.5" />
+                    Reag. enviado
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

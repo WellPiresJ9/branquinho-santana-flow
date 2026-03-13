@@ -559,6 +559,48 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                               Selecionar
                             </Button>
                           </div>
+
+                        {/* Filter by message sent */}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const filtered = column.leads.filter(l => l["mensagem-remarketing-enviada"]);
+                              if (filtered.length === 0) {
+                                toast.error('Nenhum lead com remarketing enviado nesta coluna');
+                                return;
+                              }
+                              const newSelected = new Set(selectedLeads);
+                              filtered.forEach(l => newSelected.add(l.id));
+                              setSelectedLeads(newSelected);
+                              toast.success(`${filtered.length} lead(s) com remarketing enviado selecionado(s)`);
+                            }}
+                            className="text-xs flex-1 gap-1"
+                          >
+                            <Mail className="w-3 h-3" />
+                            Rmkt Enviado
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const filtered = column.leads.filter(l => l["mensagem-reagendamento-enviada"]);
+                              if (filtered.length === 0) {
+                                toast.error('Nenhum lead com reagendamento enviado nesta coluna');
+                                return;
+                              }
+                              const newSelected = new Set(selectedLeads);
+                              filtered.forEach(l => newSelected.add(l.id));
+                              setSelectedLeads(newSelected);
+                              toast.success(`${filtered.length} lead(s) com reagendamento enviado selecionado(s)`);
+                            }}
+                            className="text-xs flex-1 gap-1"
+                          >
+                            <Mail className="w-3 h-3" />
+                            Reag. Enviado
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
