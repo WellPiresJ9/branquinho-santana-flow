@@ -2,7 +2,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Phone, Scale } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Phone, Scale, Mail, MailCheck } from "lucide-react";
 
 interface Lead {
   id: number;
