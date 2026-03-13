@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users2, CheckSquare, ChevronDown, Download } from "lucide-react";
+import { Users2, CheckSquare, ChevronDown, Download, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LeadCard } from "./LeadCard";
@@ -29,6 +29,8 @@ interface Lead {
   responsavel: string | null;
   status: string | null;
   hora_reuniao?: string | null;
+  "mensagem-remarketing-enviada"?: boolean | null;
+  "mensagem-reagendamento-enviada"?: boolean | null;
 }
 
 interface Column {
@@ -40,7 +42,7 @@ interface Column {
 
 const LEADS_PER_PAGE = 50;
 
-const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao';
+const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao, "mensagem-remarketing-enviada", "mensagem-reagendamento-enviada"';
 
 const getLeadStatus = (lead: Lead): string => {
   if (lead.agendados ?? false) return 'agendado';
@@ -557,6 +559,48 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                               Selecionar
                             </Button>
                           </div>
+
+                        {/* Filter by message sent */}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const filtered = column.leads.filter(l => l["mensagem-remarketing-enviada"]);
+                              if (filtered.length === 0) {
+                                toast.error('Nenhum lead com remarketing enviado nesta coluna');
+                                return;
+                              }
+                              const newSelected = new Set(selectedLeads);
+                              filtered.forEach(l => newSelected.add(l.id));
+                              setSelectedLeads(newSelected);
+                              toast.success(`${filtered.length} lead(s) com remarketing enviado selecionado(s)`);
+                            }}
+                            className="text-xs flex-1 gap-1"
+                          >
+                            <Mail className="w-3 h-3" />
+                            Rmkt Enviado
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const filtered = column.leads.filter(l => l["mensagem-reagendamento-enviada"]);
+                              if (filtered.length === 0) {
+                                toast.error('Nenhum lead com reagendamento enviado nesta coluna');
+                                return;
+                              }
+                              const newSelected = new Set(selectedLeads);
+                              filtered.forEach(l => newSelected.add(l.id));
+                              setSelectedLeads(newSelected);
+                              toast.success(`${filtered.length} lead(s) com reagendamento enviado selecionado(s)`);
+                            }}
+                            className="text-xs flex-1 gap-1"
+                          >
+                            <Mail className="w-3 h-3" />
+                            Reag. Enviado
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
