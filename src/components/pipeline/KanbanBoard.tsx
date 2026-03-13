@@ -343,69 +343,15 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     }
   };
 
-  const handleSelectByDay = (columnId: string, day: number, month: number, year: number) => {
-    const column = columns.find(col => col.id === columnId);
-    if (!column) return;
-
-    const leadsFromDay = column.leads.filter(lead => {
-      const createdDate = new Date(lead.created_at);
-      const isCreatedOnDay = createdDate.getDate() === day && 
-                            createdDate.getMonth() === month && 
-                            createdDate.getFullYear() === year;
-      
-      if (lead.hora_reuniao) {
-        try {
-          const appointmentDate = new Date(lead.hora_reuniao);
-          const isAppointmentOnDay = appointmentDate.getDate() === day && 
-                                     appointmentDate.getMonth() === month && 
-                                     appointmentDate.getFullYear() === year;
-          return isCreatedOnDay || isAppointmentOnDay;
-        } catch (e) {
-          return isCreatedOnDay;
-        }
-      }
-      
-      return isCreatedOnDay;
-    });
-
-    const leadIdsFromDay = new Set(leadsFromDay.map(l => l.id));
-
+  const handleDaySelection = (columnId: string, day: number, month: number, year: number) => {
     if (selectedDayByColumn[columnId] === day && selectedMonthByColumn[columnId] === month && selectedYearByColumn[columnId] === year) {
-      const newSelected = new Set(selectedLeads);
-      leadIdsFromDay.forEach(id => newSelected.delete(id));
-      setSelectedLeads(newSelected);
-      
       setSelectedDayByColumn(prev => { const u = { ...prev }; delete u[columnId]; return u; });
       setSelectedMonthByColumn(prev => { const u = { ...prev }; delete u[columnId]; return u; });
       setSelectedYearByColumn(prev => { const u = { ...prev }; delete u[columnId]; return u; });
-      
-      toast.info(`Seleção do dia ${day} removida`);
     } else {
-      const newSelected = new Set<number>();
-      selectedLeads.forEach(leadId => {
-        const lead = leads.find(l => l.id === leadId);
-        if (lead && getLeadStatus(lead) !== columnId) {
-          newSelected.add(leadId);
-        }
-      });
-      
-      leadIdsFromDay.forEach(id => newSelected.add(id));
-      setSelectedLeads(newSelected);
-      
       setSelectedDayByColumn(prev => ({ ...prev, [columnId]: day }));
       setSelectedMonthByColumn(prev => ({ ...prev, [columnId]: month }));
       setSelectedYearByColumn(prev => ({ ...prev, [columnId]: year }));
-      
-      const monthNames = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-      ];
-      
-      if (leadsFromDay.length === 0) {
-        toast.error(`Nenhum lead encontrado para ${day} de ${monthNames[month]} ${year}`);
-      } else {
-        toast.success(`${leadsFromDay.length} lead${leadsFromDay.length !== 1 ? 's' : ''} do dia ${day} de ${monthNames[month]} ${year} selecionado${leadsFromDay.length !== 1 ? 's' : ''}!`);
-      }
     }
   };
 
