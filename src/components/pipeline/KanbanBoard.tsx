@@ -409,13 +409,60 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
     }
   };
 
-  const handleSelectByQuantity = (columnId: string, quantity: number) => {
+  const handleCombinedSelect = (columnId: string) => {
     const column = columns.find(col => col.id === columnId);
-    if (!column || quantity <= 0) return;
+    if (!column) return;
 
-    const leadsToSelect = column.leads.slice(0, quantity);
-    const leadIds = new Set(leadsToSelect.map(l => l.id));
+    const filterRmkt = filterRmktByColumn[columnId] || false;
+    const filterReag = filterReagByColumn[columnId] || false;
+    const day = selectedDayByColumn[columnId];
+    const month = selectedMonthByColumn[columnId];
+    const year = selectedYearByColumn[columnId];
+    const quantity = parseInt(quantityByColumn[columnId] || "0");
 
+    let filtered = [...column.leads];
+
+    // Filter by message sent
+    if (filterRmkt) {
+      filtered = filtered.filter(l => l["mensagem-remarketing-enviada"]);
+    }
+    if (filterReag) {
+      filtered = filtered.filter(l => l["mensagem-reagendamento-enviada"]);
+    }
+
+    // Filter by day
+    if (day !== undefined && month !== undefined && year !== undefined) {
+      filtered = filtered.filter(lead => {
+        const createdDate = new Date(lead.created_at);
+        const isCreatedOnDay = createdDate.getDate() === day && 
+                              createdDate.getMonth() === month && 
+                              createdDate.getFullYear() === year;
+        if (lead.hora_reuniao) {
+          try {
+            const appointmentDate = new Date(lead.hora_reuniao);
+            const isAppointmentOnDay = appointmentDate.getDate() === day && 
+                                       appointmentDate.getMonth() === month && 
+                                       appointmentDate.getFullYear() === year;
+            return isCreatedOnDay || isAppointmentOnDay;
+          } catch (e) {
+            return isCreatedOnDay;
+          }
+        }
+        return isCreatedOnDay;
+      });
+    }
+
+    // Limit by quantity
+    if (quantity > 0) {
+      filtered = filtered.slice(0, quantity);
+    }
+
+    if (filtered.length === 0) {
+      toast.error('Nenhum lead encontrado com os filtros selecionados');
+      return;
+    }
+
+    // Keep selections from other columns
     const newSelected = new Set<number>();
     selectedLeads.forEach(leadId => {
       const lead = leads.find(l => l.id === leadId);
@@ -424,10 +471,10 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
       }
     });
 
-    leadIds.forEach(id => newSelected.add(id));
+    filtered.forEach(l => newSelected.add(l.id));
     setSelectedLeads(newSelected);
 
-    toast.success(`${leadsToSelect.length} lead${leadsToSelect.length !== 1 ? 's' : ''} selecionado${leadsToSelect.length !== 1 ? 's' : ''} em ${column.title}`);
+    toast.success(`${filtered.length} lead${filtered.length !== 1 ? 's' : ''} selecionado${filtered.length !== 1 ? 's' : ''} em ${column.title}`);
   };
 
   const allLeadsSelected = leads.length > 0 && selectedLeads.size === leads.length;
