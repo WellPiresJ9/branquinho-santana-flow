@@ -42,7 +42,7 @@ interface Column {
 
 const LEADS_PER_PAGE = 50;
 
-const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao';
+const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao, mensagem-remarketing-enviada, mensagem-reagendamento-enviada';
 
 const getLeadStatus = (lead: Lead): string => {
   if (lead.agendados ?? false) return 'agendado';
