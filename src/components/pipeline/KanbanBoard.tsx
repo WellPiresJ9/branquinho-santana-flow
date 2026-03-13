@@ -539,79 +539,63 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                           }
                         </Button>
                         
-                        <DaySelector 
-                          onSelectDay={(day, month, year) => handleSelectByDay(column.id, day, month, year)}
-                          selectedDay={selectedDayByColumn[column.id]}
-                          selectedMonth={selectedMonthByColumn[column.id]}
-                          selectedYear={selectedYearByColumn[column.id]}
-                        />
-                        
-                        <div className="flex gap-2">
+                        {/* Combined filters */}
+                        <div className="border border-border rounded-lg p-2 space-y-2 bg-muted/20">
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Filtros combinados</p>
+                          
+                          <DaySelector 
+                            onSelectDay={(day, month, year) => handleDaySelection(column.id, day, month, year)}
+                            selectedDay={selectedDayByColumn[column.id]}
+                            selectedMonth={selectedMonthByColumn[column.id]}
+                            selectedYear={selectedYearByColumn[column.id]}
+                          />
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5">
+                              <Checkbox
+                                id={`rmkt-${column.id}`}
+                                checked={filterRmktByColumn[column.id] || false}
+                                onCheckedChange={(checked) => setFilterRmktByColumn(prev => ({ ...prev, [column.id]: !!checked }))}
+                                className="h-3.5 w-3.5"
+                              />
+                              <Label htmlFor={`rmkt-${column.id}`} className="text-[10px] cursor-pointer flex items-center gap-1">
+                                <Mail className="w-2.5 h-2.5" />
+                                Rmkt
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Checkbox
+                                id={`reag-${column.id}`}
+                                checked={filterReagByColumn[column.id] || false}
+                                onCheckedChange={(checked) => setFilterReagByColumn(prev => ({ ...prev, [column.id]: !!checked }))}
+                                className="h-3.5 w-3.5"
+                              />
+                              <Label htmlFor={`reag-${column.id}`} className="text-[10px] cursor-pointer flex items-center gap-1">
+                                <Mail className="w-2.5 h-2.5" />
+                                Reag.
+                              </Label>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
                             <Input
                               type="number"
                               min="1"
                               max={column.leads.length}
-                              placeholder="Qtd. de leads"
+                              placeholder="Qtd. (opcional)"
                               value={quantityByColumn[column.id] || ""}
                               onChange={(e) => setQuantityByColumn(prev => ({ ...prev, [column.id]: e.target.value }))}
-                              className="text-xs h-9"
+                              className="text-xs h-8"
                             />
                             <Button
-                              variant="outline"
+                              variant="default"
                               size="sm"
-                              onClick={() => {
-                                const qty = parseInt(quantityByColumn[column.id] || "0");
-                                if (!isNaN(qty) && qty > 0) {
-                                  handleSelectByQuantity(column.id, qty);
-                                }
-                              }}
-                              disabled={!quantityByColumn[column.id] || parseInt(quantityByColumn[column.id] || "0") <= 0}
-                              className="text-xs"
+                              onClick={() => handleCombinedSelect(column.id)}
+                              className="text-xs h-8"
                             >
-                              Selecionar
+                              Aplicar
                             </Button>
                           </div>
-
-                        {/* Filter by message sent */}
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const filtered = column.leads.filter(l => l["mensagem-remarketing-enviada"]);
-                              if (filtered.length === 0) {
-                                toast.error('Nenhum lead com remarketing enviado nesta coluna');
-                                return;
-                              }
-                              const newSelected = new Set(selectedLeads);
-                              filtered.forEach(l => newSelected.add(l.id));
-                              setSelectedLeads(newSelected);
-                              toast.success(`${filtered.length} lead(s) com remarketing enviado selecionado(s)`);
-                            }}
-                            className="text-xs flex-1 gap-1"
-                          >
-                            <Mail className="w-3 h-3" />
-                            Rmkt Enviado
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const filtered = column.leads.filter(l => l["mensagem-reagendamento-enviada"]);
-                              if (filtered.length === 0) {
-                                toast.error('Nenhum lead com reagendamento enviado nesta coluna');
-                                return;
-                              }
-                              const newSelected = new Set(selectedLeads);
-                              filtered.forEach(l => newSelected.add(l.id));
-                              setSelectedLeads(newSelected);
-                              toast.success(`${filtered.length} lead(s) com reagendamento enviado selecionado(s)`);
-                            }}
-                            className="text-xs flex-1 gap-1"
-                          >
-                            <Mail className="w-3 h-3" />
-                            Reag. Enviado
-                          </Button>
                         </div>
                       </div>
                     )}
