@@ -29,6 +29,8 @@ interface Lead {
   responsavel: string | null;
   status: string | null;
   hora_reuniao?: string | null;
+  "mensagem-remarketing-enviada"?: boolean | null;
+  "mensagem-reagendamento-enviada"?: boolean | null;
 }
 
 interface Column {
