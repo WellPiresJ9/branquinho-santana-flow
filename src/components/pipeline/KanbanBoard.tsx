@@ -22,6 +22,7 @@ import { LeadCard } from "./LeadCard";
 import { BulkSelectionToolbar } from "./BulkSelectionToolbar";
 import { BulkMoveModal } from "./BulkMoveModal";
 import { DaySelector } from "./DaySelector";
+import { ChatHistoryDialog } from "./ChatHistoryDialog";
 import * as XLSX from 'xlsx';
 
 interface Lead {
