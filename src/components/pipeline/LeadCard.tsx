@@ -22,6 +22,7 @@ interface Lead {
   hora_reuniao?: string | null;
   "mensagem-remarketing-enviada"?: boolean | null;
   "mensagem-reagendamento-enviada"?: boolean | null;
+  historico?: string | null;
 }
 
 interface LeadCardProps {
@@ -31,6 +32,7 @@ interface LeadCardProps {
   isBulkMode: boolean;
   isSelected: boolean;
   onSelectionChange: (leadId: number, selected: boolean) => void;
+  onCardClick?: () => void;
 }
 
 const SERVICE_COLORS: { [key: string]: string } = {
@@ -53,7 +55,8 @@ function LeadCardInner({
   snapshot, 
   isBulkMode, 
   isSelected, 
-  onSelectionChange 
+  onSelectionChange,
+  onCardClick
 }: LeadCardProps) {
   const getDisplayDate = () => {
     if (lead.agendados && lead.hora_reuniao) {
@@ -88,11 +91,14 @@ function LeadCardInner({
       className={`transition-transform ${
         snapshot.isDragging ? 'rotate-3 scale-105' : ''
       }`}
+      onClick={() => {
+        if (!isBulkMode && onCardClick) onCardClick();
+      }}
     >
       <Card className={`relative shadow-card hover:shadow-elegant transition-all duration-200 ${
         isBulkMode 
           ? `cursor-pointer ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/30'}` 
-          : 'cursor-grab active:cursor-grabbing'
+          : 'cursor-pointer active:cursor-grabbing'
       }`}>
         {isBulkMode && (
           <div 

@@ -22,6 +22,7 @@ import { LeadCard } from "./LeadCard";
 import { BulkSelectionToolbar } from "./BulkSelectionToolbar";
 import { BulkMoveModal } from "./BulkMoveModal";
 import { DaySelector } from "./DaySelector";
+import { ChatHistoryDialog } from "./ChatHistoryDialog";
 import * as XLSX from 'xlsx';
 
 interface Lead {
@@ -43,6 +44,7 @@ interface Lead {
   hora_reuniao?: string | null;
   "mensagem-remarketing-enviada"?: boolean | null;
   "mensagem-reagendamento-enviada"?: boolean | null;
+  historico?: string | null;
 }
 
 interface Column {
@@ -54,7 +56,7 @@ interface Column {
 
 const LEADS_PER_PAGE = 50;
 
-const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao, "mensagem-remarketing-enviada", "mensagem-reagendamento-enviada"';
+const SELECTED_COLUMNS = 'id, nome, telefone, produto_juridico, created_at, em_atendimento, agendados, remarketing, remarketing_pedro, remarketing_julianny, reagendamento, vencemos, perdidos, responsavel, status, hora_reuniao, "mensagem-remarketing-enviada", "mensagem-reagendamento-enviada", historico';
 
 const getLeadStatus = (lead: Lead): string => {
   if (lead.agendados ?? false) return 'agendado';
@@ -115,6 +117,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [filterReagByColumn, setFilterReagByColumn] = useState<Record<string, boolean>>({});
   const [showHighVolumeConfirm, setShowHighVolumeConfirm] = useState(false);
   const [pendingBulkTarget, setPendingBulkTarget] = useState<string>('');
+  const [chatDialogLead, setChatDialogLead] = useState<Lead | null>(null);
 
   useEffect(() => {
     const fetchAllChats = async () => {
@@ -626,6 +629,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                                   isBulkMode={isBulkMode}
                                   isSelected={selectedLeads.has(lead.id)}
                                   onSelectionChange={handleLeadSelection}
+                                  onCardClick={() => !isBulkMode && setChatDialogLead(lead)}
                                 />
                               )}
                             </Draggable>
@@ -706,6 +710,13 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ChatHistoryDialog
+        open={!!chatDialogLead}
+        onOpenChange={(open) => { if (!open) setChatDialogLead(null); }}
+        leadName={chatDialogLead?.nome ?? null}
+        historico={chatDialogLead?.historico ?? null}
+      />
     </div>
   );
 }
