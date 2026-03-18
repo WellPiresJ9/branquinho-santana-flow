@@ -91,11 +91,14 @@ function LeadCardInner({
       className={`transition-transform ${
         snapshot.isDragging ? 'rotate-3 scale-105' : ''
       }`}
+      onClick={() => {
+        if (!isBulkMode && onCardClick) onCardClick();
+      }}
     >
       <Card className={`relative shadow-card hover:shadow-elegant transition-all duration-200 ${
         isBulkMode 
           ? `cursor-pointer ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/30'}` 
-          : 'cursor-grab active:cursor-grabbing'
+          : 'cursor-pointer active:cursor-grabbing'
       }`}>
         {isBulkMode && (
           <div 
