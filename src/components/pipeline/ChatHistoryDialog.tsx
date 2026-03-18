@@ -80,7 +80,7 @@ export function ChatHistoryDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4 py-4">
+        <ScrollArea className="flex-1 max-h-[calc(85vh-80px)] px-4 py-4">
           {messages.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-12">
               Nenhum histórico de conversa disponível.
