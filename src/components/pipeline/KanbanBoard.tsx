@@ -710,6 +710,13 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ChatHistoryDialog
+        open={!!chatDialogLead}
+        onOpenChange={(open) => { if (!open) setChatDialogLead(null); }}
+        leadName={chatDialogLead?.nome ?? null}
+        historico={chatDialogLead?.historico ?? null}
+      />
     </div>
   );
 }
