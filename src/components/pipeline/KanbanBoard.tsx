@@ -44,6 +44,7 @@ interface Lead {
   hora_reuniao?: string | null;
   "mensagem-remarketing-enviada"?: boolean | null;
   "mensagem-reagendamento-enviada"?: boolean | null;
+  historico?: string | null;
 }
 
 interface Column {
