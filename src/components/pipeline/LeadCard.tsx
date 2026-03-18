@@ -22,6 +22,7 @@ interface Lead {
   hora_reuniao?: string | null;
   "mensagem-remarketing-enviada"?: boolean | null;
   "mensagem-reagendamento-enviada"?: boolean | null;
+  historico?: string | null;
 }
 
 interface LeadCardProps {
@@ -31,6 +32,7 @@ interface LeadCardProps {
   isBulkMode: boolean;
   isSelected: boolean;
   onSelectionChange: (leadId: number, selected: boolean) => void;
+  onCardClick?: () => void;
 }
 
 const SERVICE_COLORS: { [key: string]: string } = {
