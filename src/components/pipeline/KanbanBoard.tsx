@@ -629,6 +629,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
                                   isBulkMode={isBulkMode}
                                   isSelected={selectedLeads.has(lead.id)}
                                   onSelectionChange={handleLeadSelection}
+                                  onCardClick={() => !isBulkMode && setChatDialogLead(lead)}
                                 />
                               )}
                             </Draggable>
