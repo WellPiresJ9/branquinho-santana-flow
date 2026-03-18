@@ -117,6 +117,7 @@ export function KanbanBoard({ searchTerm = "", selectedMonths = [] }: KanbanBoar
   const [filterReagByColumn, setFilterReagByColumn] = useState<Record<string, boolean>>({});
   const [showHighVolumeConfirm, setShowHighVolumeConfirm] = useState(false);
   const [pendingBulkTarget, setPendingBulkTarget] = useState<string>('');
+  const [chatDialogLead, setChatDialogLead] = useState<Lead | null>(null);
 
   useEffect(() => {
     const fetchAllChats = async () => {
