@@ -37,6 +37,9 @@ export type Database = {
           agendados: boolean | null
           created_at: string
           em_atendimento: boolean | null
+          followup: string | null
+          "followup-fora-horario": string | null
+          historico: string | null
           hora_criacao_reuniao: string | null
           hora_reuniao: string | null
           id: number
@@ -54,12 +57,16 @@ export type Database = {
           "reuniao-confirmada": boolean | null
           status: string | null
           telefone: string | null
+          ultima_interacao: string | null
           vencemos: boolean | null
         }
         Insert: {
           agendados?: boolean | null
           created_at?: string
           em_atendimento?: boolean | null
+          followup?: string | null
+          "followup-fora-horario"?: string | null
+          historico?: string | null
           hora_criacao_reuniao?: string | null
           hora_reuniao?: string | null
           id?: number
@@ -77,12 +84,16 @@ export type Database = {
           "reuniao-confirmada"?: boolean | null
           status?: string | null
           telefone?: string | null
+          ultima_interacao?: string | null
           vencemos?: boolean | null
         }
         Update: {
           agendados?: boolean | null
           created_at?: string
           em_atendimento?: boolean | null
+          followup?: string | null
+          "followup-fora-horario"?: string | null
+          historico?: string | null
           hora_criacao_reuniao?: string | null
           hora_reuniao?: string | null
           id?: number
@@ -100,6 +111,7 @@ export type Database = {
           "reuniao-confirmada"?: boolean | null
           status?: string | null
           telefone?: string | null
+          ultima_interacao?: string | null
           vencemos?: boolean | null
         }
         Relationships: []
