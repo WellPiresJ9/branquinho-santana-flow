@@ -55,7 +55,8 @@ function LeadCardInner({
   snapshot, 
   isBulkMode, 
   isSelected, 
-  onSelectionChange 
+  onSelectionChange,
+  onCardClick
 }: LeadCardProps) {
   const getDisplayDate = () => {
     if (lead.agendados && lead.hora_reuniao) {
